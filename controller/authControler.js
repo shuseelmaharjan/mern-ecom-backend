@@ -17,10 +17,9 @@ const signup = asyncHandler(async(req, res) => {
             });
             const saveUser = await newUser.save();
     
-            res.status(200).json({message:'User created successfully', user:saveUser});
+            res.status(200).json({message:'User created successfully.', user:saveUser});
         }catch(error){
-            console.error(error);
-            res.status(400).json({error: error.message});
+            res.status(400).json({error:'Something went wrong.', error:error.errorResponse.errmsg});
         }
 })
 
