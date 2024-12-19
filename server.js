@@ -1,41 +1,29 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
-const cors = require('cors');
+const cors = require('./middleware/cors');
 
 dotenv.config();
 connectDB();
 
 const app = express();
-app.use(express.json());
-app.use(cors());
+app.options('*', cors());  
 
-// import routes
-// const userRouters = require('./routes/userRoutes');
-const authRoutes = require('./routes/authRoutes');
+// Use CORS middleware before all routes
+app.use(cors());  // This must be before your route handling
+
+app.use(express.json());
+
+// Define routes
 const userRoutes = require('./routes/userSignup');
 const loginUserRoutes = require('./routes/loginUserRoutes');
 
-
-
-
-// use routes
 app.use('/api', userRoutes);
 app.use('/api', loginUserRoutes);
-// app.use('/api/auth', authRoutes);
-
-
-// console.log("authRoutes:", authRoutes);
-console.log("userRoutes:", userRoutes);
-console.log("loginRoutes:", loginUserRoutes);
-
-
 
 app.get('/', (req, res) => {
-    res.send("API is running...");
+  res.send("API is running...");
 });
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, console.log(`Server is running on port ${PORT}`));
-
-

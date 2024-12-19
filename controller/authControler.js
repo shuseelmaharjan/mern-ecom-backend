@@ -68,13 +68,15 @@ const login = asyncHandler(async(req, res)=> {
         {expiresIn:'1d'}
     )
 
-    //create secure cookie with refresh token
-    res.cookie('xhr', refreshToken,{
-        httpOnly:true, //accessable only by web server
-        secure:false, //https
-        sameSite: 'None', //cross-site cookie
-        maxAge: 7*24*60*60*1000 //cookie expiry: set to match refresh token
-    })
+    // In your `authController.js`
+    res.cookie('xhr', refreshToken, {
+        httpOnly: true,  // Cookie is only accessible by the server
+        secure: process.env.NODE_ENV === 'production', // Set to true if using HTTPS in production
+        sameSite: 'None',  // Required for cross-site cookies
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 1-week expiration for refresh token
+        path: '/', // Accessible for all routes
+    });
+
 
     //send accessToken containing email
     res.json({accessToken})
