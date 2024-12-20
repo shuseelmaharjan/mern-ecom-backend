@@ -27,62 +27,50 @@ const signup = asyncHandler(async(req, res) => {
 // @desc Login
 // @route POST /api/v1/login
 // @access Public
-const login = asyncHandler(async(req, res)=> {
-    const {email, password} = req.body
+const login = asyncHandler(async (req, res) => {
+    const { email, password } = req.body;
 
-    console.log("password: ", password)
-
-    if(!email || !password){
-        return res.status(400).json({message:'All fields are required!'})
+    if (!email || !password) {
+        return res.status(400).json({ message: 'All fields are required!' });
     }
 
-    const foundUser = await User.findOne({email}).exec()
-    console.log("Found User:", foundUser)
-
-    if(!foundUser){
-        return res.status(401).json({message: 'Unauthorized'})
+    const foundUser = await User.findOne({ email }).exec();
+    if (!foundUser) {
+        return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    const match = await bcrypt.compare(password, foundUser.password)
-
-    if(!match) return res.status(401).json({message:'Unauthorized'})
-    
-    console.log("Match Password:", match)
-
+    const match = await bcrypt.compare(password, foundUser.password);
+    if (!match) return res.status(401).json({ message: 'Unauthorized' });
 
     const accessToken = xhr.sign(
         {
-            "UserInfo":{
+            "UserInfo": {
                 "email": foundUser.email,
-                "id":foundUser._id
+                "id": foundUser._id
             }
         },
         process.env.ACCESS_TOKEN_SECRET,
-        {expiresIn:'1hr'}
-
-    )
+        { expiresIn: '1hr' }
+    );
 
     const refreshToken = xhr.sign(
-        {"email":foundUser.email},
+        { "email": foundUser.email },
         process.env.REFRESH_TOKEN_SECRET,
-        {expiresIn:'1d'}
-    )
+        { expiresIn: '7d' }
+    );
 
-    // In your `authController.js`
+    // Set a persistent cookie with refreshToken
     res.cookie('xhr', refreshToken, {
-        httpOnly: true,  // Cookie is only accessible by the server
-        secure: process.env.NODE_ENV === 'production', // Set to true if using HTTPS in production
-        sameSite: 'None',  // Required for cross-site cookies
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 1-week expiration for refresh token
-        path: '/', // Accessible for all routes
+        httpOnly: true,
+        secure: false, // Use true in production
+        sameSite: 'Lax', // Required for cross-origin requests
+        maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
     });
 
+    // Send accessToken containing email
+    res.json({ accessToken });
+});
 
-    //send accessToken containing email
-    res.json({accessToken})
-    
-
-})
 
 // @desc Refresh
 // @route GET /api/v1/refresh
@@ -113,12 +101,52 @@ const refresh = (req, res) => {
                     }
                 },
                 process.env.ACCESS_TOKEN_SECRET,
-                {expiresIn:'10s'}
+                {expiresIn:'1hr'}
             )
             res.json({accessToken})
         })
     )
 
+}
+
+// @desc Refresh
+// @route GET /api/v2/refresh
+// @access Public - second api to get new accessToken with refreshToken only in header
+const refreshToken = (req, res) => {
+    // Get the Bearer token from the Authorization header
+    const authHeader = req.headers['authorization'];
+    if (!authHeader) return res.status(401).json({ message: 'Authorization token missing' });
+
+    const token = authHeader.split(' ')[1];  // Extract the token from "Bearer <token>"
+    if (!token) return res.status(401).json({ message: 'Invalid Authorization header format' });
+
+    // Verify the token using the REFRESH_TOKEN_SECRET
+    xhr.verify(token, process.env.REFRESH_TOKEN_SECRET, asyncHandler(async (err, decode) => {
+        if (err) {
+            return res.status(403).json({ message: 'Forbidden' });  // Invalid token
+        }
+
+        // Find the user by email decoded from the refresh token
+        const foundUser = await User.findOne({ email: decode.email });
+        if (!foundUser) {
+            return res.status(401).json({ message: 'Unauthorized' });  // User not found
+        }
+
+        // Generate a new access token
+        const accessToken = xhr.sign(
+            {
+                "UserInfo": {
+                    "email": foundUser.email,
+                    "id": foundUser._id,
+                },
+            },
+            process.env.ACCESS_TOKEN_SECRET,
+            { expiresIn: '1hr' }  // Access token expiration time (can adjust as needed)
+        );
+
+        // Send the new access token in the response
+        res.json({ accessToken });
+    }));
 }
 
 
@@ -129,16 +157,54 @@ const logout = (req, res) => {
     console.log(req.cookies)
 
     const cookie = req.cookies
-    if(!cookie?.xhr) return res.sendStatus(204) //no content
+    if(!cookie?.xhr) return res.sendStatus(204) 
     res.clearCookie('xhr', {httpOnly:true, sameSite:'None', secure:false})
     res.json({message:'Cookie cleared'})
 
 }
+
+// @desc Check accessToken Validity
+// @route GET api/v1/check-token
+// @access Public - just to check token validation
+const checkTokenValidity = (req, res) => {
+    const cookieToken = req.cookies?.xhr;
+    if (!cookieToken) {
+        return res.status(401).json({ message: 'Cookie token not provided' });
+    }
+
+    // Retrieve the accessToken from the Authorization header
+    const headerToken = req.headers.authorization?.split(' ')[1];
+    if (!headerToken) {
+        return res.status(401).json({ message: 'Bearer token not provided in headers' });
+    }
+
+    try {
+        // Verify the cookie token using the refresh token secret
+        xhr.verify(cookieToken, process.env.REFRESH_TOKEN_SECRET);
+
+        // Verify the header token using the access token secret
+        const decoded = xhr.verify(headerToken, process.env.ACCESS_TOKEN_SECRET);
+
+        // Convert activation time to ISO string
+        const activationTime = new Date(decoded.iat * 1000);
+        res.json({
+            activationTime: activationTime.toISOString(),
+            valid: true,
+        });
+    } catch (error) {
+        res.status(403).json({ message: 'Token is invalid or expired', valid: false });
+    }
+};
+
+
+
 
 
 module.exports = {
     signup,
     login,
     refresh,
-    logout
+    logout,
+    checkTokenValidity,
+    refreshToken,
 }

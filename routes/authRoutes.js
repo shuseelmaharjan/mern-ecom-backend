@@ -12,8 +12,15 @@ router.route('/v1/login')
 router.route('/v1/refresh')
     .get(authController.refresh)
 
+router.route('/v2/refresh')
+    .get(authController.refreshToken)
+
 router.route('/v1/logout')
     .post(authController.logout)
+
+router.route('/v1/check-token')
+    .get(authController.checkTokenValidity);
+
 
 
 module.exports = router;
