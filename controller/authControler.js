@@ -1,6 +1,6 @@
 const User = require('../models/User')
 const bcrypt = require('bcrypt')
-const xhr = require('jsonwebtoken')
+const rest = require('jsonwebtoken')
 const asyncHandler = require('express-async-handler')
 
 // @desc Signup
@@ -42,7 +42,7 @@ const login = asyncHandler(async (req, res) => {
     const match = await bcrypt.compare(password, foundUser.password);
     if (!match) return res.status(401).json({ message: 'Unauthorized' });
 
-    const accessToken = xhr.sign(
+    const accessToken = rest.sign(
         {
             "UserInfo": {
                 "email": foundUser.email,
@@ -53,14 +53,14 @@ const login = asyncHandler(async (req, res) => {
         { expiresIn: '1hr' }
     );
 
-    const refreshToken = xhr.sign(
+    const refreshToken = rest.sign(
         { "email": foundUser.email },
         process.env.REFRESH_TOKEN_SECRET,
         { expiresIn: '7d' }
     );
 
     // Set a persistent cookie with refreshToken
-    res.cookie('xhr', refreshToken, {
+    res.cookie('rest', refreshToken, {
         httpOnly: true,
         secure: false, // Use true in production
         sameSite: 'Lax', // Required for cross-origin requests
@@ -77,13 +77,12 @@ const login = asyncHandler(async (req, res) => {
 // @access Public - because access token has expired
 const refresh = (req, res) => {
     const cookie = req.cookies;
-    console.log(cookie)
-    if (!cookie?.xhr) return res.status(401).json({ message: 'Cookie not found' });
+    if (!cookie?.rest) return res.status(401).json({ message: 'Cookie not found' });
     
     
-    const refreshToken = cookie.xhr
+    const refreshToken = cookie.rest
 
-    xhr.verify(
+    rest.verify(
         refreshToken,
         process.env.REFRESH_TOKEN_SECRET,
         asyncHandler(async (err, decode) => {
@@ -93,7 +92,7 @@ const refresh = (req, res) => {
 
             if(!foundUser) return res.status(401).json({message:'Unauthorized'})
 
-            const accessToken = xhr.sign(
+            const accessToken = rest.sign(
                 {
                     "UserInfo":{
                         "email": foundUser.email,
@@ -121,7 +120,7 @@ const refreshToken = (req, res) => {
     if (!token) return res.status(401).json({ message: 'Invalid Authorization header format' });
 
     // Verify the token using the REFRESH_TOKEN_SECRET
-    xhr.verify(token, process.env.REFRESH_TOKEN_SECRET, asyncHandler(async (err, decode) => {
+    rest.verify(token, process.env.REFRESH_TOKEN_SECRET, asyncHandler(async (err, decode) => {
         if (err) {
             return res.status(403).json({ message: 'Forbidden' });  // Invalid token
         }
@@ -133,7 +132,7 @@ const refreshToken = (req, res) => {
         }
 
         // Generate a new access token
-        const accessToken = xhr.sign(
+        const accessToken = rest.sign(
             {
                 "UserInfo": {
                     "email": foundUser.email,
@@ -154,20 +153,27 @@ const refreshToken = (req, res) => {
 // @route GET /api/v1/logout
 // @access Public - just to clear cookie if exists
 const logout = (req, res) => {
-    console.log(req.cookies)
+    console.log(req.cookies);
 
-    const cookie = req.cookies
-    if(!cookie?.xhr) return res.sendStatus(204) 
-    res.clearCookie('xhr', {httpOnly:true, sameSite:'None', secure:false})
-    res.json({message:'Cookie cleared'})
+    const cookie = req.cookies;
+    if (!cookie?.rest) return res.sendStatus(204); 
 
-}
+    console.log('Clearing cookie');
+    res.clearCookie('rest', {
+        httpOnly: true,
+        secure: false, // Matches the secure setting from login
+        sameSite: 'Lax', // Matches the sameSite setting from login
+        path: '/', // Ensure path is explicitly specified if needed
+    });
+    res.json({ message: 'Cookie cleared successfully' });
+};
+
 
 // @desc Check accessToken Validity
 // @route GET api/v1/check-token
 // @access Public - just to check token validation
 const checkTokenValidity = (req, res) => {
-    const cookieToken = req.cookies?.xhr;
+    const cookieToken = req.cookies?.rest;
     if (!cookieToken) {
         return res.status(401).json({ message: 'Cookie token not provided' });
     }
@@ -180,10 +186,10 @@ const checkTokenValidity = (req, res) => {
 
     try {
         // Verify the cookie token using the refresh token secret
-        xhr.verify(cookieToken, process.env.REFRESH_TOKEN_SECRET);
+        rest.verify(cookieToken, process.env.REFRESH_TOKEN_SECRET);
 
         // Verify the header token using the access token secret
-        const decoded = xhr.verify(headerToken, process.env.ACCESS_TOKEN_SECRET);
+        const decoded = rest.verify(headerToken, process.env.ACCESS_TOKEN_SECRET);
 
         // Convert activation time to ISO string
         const activationTime = new Date(decoded.iat * 1000);
