@@ -42,11 +42,25 @@ const login = asyncHandler(async (req, res) => {
     const match = await bcrypt.compare(password, foundUser.password);
     if (!match) return res.status(401).json({ message: 'Unauthorized' });
 
+    // Determine the role
+    let role = '';
+    if (foundUser.isAdmin) {
+        role = 'admin';
+    } else if (foundUser.isVendor) {
+        role = 'vendor';
+    } else if (foundUser.isUser) {
+        role = 'user';
+    } else if (foundUser.isStaff) {
+        role = 'staff';
+    }
+
+    // Create accessToken and refreshToken with role
     const accessToken = rest.sign(
         {
             "UserInfo": {
                 "email": foundUser.email,
-                "id": foundUser._id
+                "id": foundUser._id,
+                "role": role
             }
         },
         process.env.ACCESS_TOKEN_SECRET,
@@ -54,7 +68,10 @@ const login = asyncHandler(async (req, res) => {
     );
 
     const refreshToken = rest.sign(
-        { "email": foundUser.email },
+        {
+            "email": foundUser.email,
+            "role": role
+        },
         process.env.REFRESH_TOKEN_SECRET,
         { expiresIn: '7d' }
     );
@@ -67,7 +84,7 @@ const login = asyncHandler(async (req, res) => {
         maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
     });
 
-    // Send accessToken containing email
+    // Send accessToken containing email and role
     res.json({ accessToken });
 });
 
@@ -78,35 +95,47 @@ const login = asyncHandler(async (req, res) => {
 const refresh = (req, res) => {
     const cookie = req.cookies;
     if (!cookie?.rest) return res.status(401).json({ message: 'Cookie not found' });
-    
-    
-    const refreshToken = cookie.rest
+
+    const refreshToken = cookie.rest;
 
     rest.verify(
         refreshToken,
         process.env.REFRESH_TOKEN_SECRET,
         asyncHandler(async (err, decode) => {
-            if(err) return res.status(403).json({message: 'Forbidden'})
-                
-            const foundUser = await User.findOne({email: decode.email})
+            if (err) return res.status(403).json({ message: 'Forbidden' });
 
-            if(!foundUser) return res.status(401).json({message:'Unauthorized'})
+            const foundUser = await User.findOne({ email: decode.email }).exec();
+            if (!foundUser) return res.status(401).json({ message: 'Unauthorized' });
 
+            // Determine the role
+            let role = '';
+            if (foundUser.isAdmin) {
+                role = 'admin';
+            } else if (foundUser.isVendor) {
+                role = 'vendor';
+            } else if (foundUser.isUser) {
+                role = 'user';
+            } else if (foundUser.isStaff) {
+                role = 'staff';
+            }
+
+            // Generate new accessToken with role
             const accessToken = rest.sign(
                 {
-                    "UserInfo":{
+                    "UserInfo": {
                         "email": foundUser.email,
-                        "id": foundUser._id
+                        "id": foundUser._id,
+                        "role": role
                     }
                 },
                 process.env.ACCESS_TOKEN_SECRET,
-                {expiresIn:'1hr'}
-            )
-            res.json({accessToken})
-        })
-    )
+                { expiresIn: '1hr' }
+            );
 
-}
+            res.json({ accessToken });
+        })
+    );
+};
 
 // @desc Refresh
 // @route GET /api/v2/refresh
