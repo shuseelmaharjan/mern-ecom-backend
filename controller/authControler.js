@@ -231,6 +231,33 @@ const checkTokenValidity = (req, res) => {
     }
 };
 
+const updateUserDetails = async (req, res) => {
+    const userId = req.user.id;
+    const updateData = req.body;
+
+    try {
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { $set: updateData },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json({
+            message: 'User updated successfully',
+            data: updatedUser,
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: 'An error occurred while updating the user',
+            error: error.message,
+        });
+    }
+};
+
 
 
 
@@ -242,4 +269,5 @@ module.exports = {
     logout,
     checkTokenValidity,
     refreshToken,
+    updateUserDetails,
 }

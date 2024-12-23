@@ -26,6 +26,9 @@ app.use((req, res, next) => {
 const authRoute = require('./routes/authRoutes');
 app.use('/api', authRoute);
 
+const shippingRoute = require('./routes/shippingRoutes');
+app.use('/api', shippingRoute);
+
 app.use((err, req, res, next) => {
     console.error('Error:', err.message);
     res.status(err.status || 500).json({ message: 'An error occurred', error: err.message });

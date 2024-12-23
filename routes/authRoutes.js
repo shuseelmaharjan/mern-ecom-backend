@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controller/authControler');
 const loginLimiter = require('../middleware/loginLimiter')
+const verifyJWT = require('../middleware/verifyJWT')
 
 router.route('/v1/signup')
     .post(loginLimiter, authController.signup)
@@ -20,6 +21,10 @@ router.route('/v1/logout')
 
 router.route('/v1/check-token')
     .get(authController.checkTokenValidity);
+
+router.route('/v1/update-profile')
+    .put(verifyJWT, authController.updateUserDetails);
+
 
 
 
