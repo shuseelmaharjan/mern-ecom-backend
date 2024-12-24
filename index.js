@@ -35,6 +35,8 @@ app.use('/api', shippingRoute);
 const themeAndLogoRoute = require('./routes/themeAndLogoRoutes');
 app.use('/api', themeAndLogoRoute);
 
+const caetgoryRoutes = require('./routes/categoryRoutes');
+app.use('/api', caetgoryRoutes);
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
