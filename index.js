@@ -1,7 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
-const { cors, corsOptions } = require('./middleware/cors'); // Correct destructured import
+const { cors, corsOptions } = require('./middleware/cors');
 const path = require('path');
 const fs = require('fs');
 
@@ -38,6 +38,9 @@ app.use('/api', themeAndLogoRoute);
 const caetgoryRoutes = require('./routes/categoryRoutes');
 app.use('/api', caetgoryRoutes);
 
+const catalogRoute = require('./routes/catalogRoutes');
+app.use('/api', catalogRoute);
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
@@ -61,7 +64,7 @@ app.get('/image-preview', async (req, res) => {
         
         // Check if the file exists and send it
         if (fs.existsSync(filePath)) {
-          return res.sendFile(filePath);  // Send the file as a response
+          return res.sendFile(filePath);  
         } else {
           return res.status(404).json({ message: 'Image not found in the uploads folder' });
         }
@@ -71,7 +74,7 @@ app.get('/image-preview', async (req, res) => {
         
         // Check if the file exists and send it
         if (fs.existsSync(filePath)) {
-          return res.sendFile(filePath);  // Send the file as a response
+          return res.sendFile(filePath);  
         } else {
           return res.status(404).json({ message: 'Image not found in the images folder' });
         }

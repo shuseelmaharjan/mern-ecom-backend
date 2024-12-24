@@ -6,20 +6,20 @@ const GrandCategorySchema = new mongoose.Schema({
 
 const SubCategorySchema = new mongoose.Schema({
     name: { type: String, required: true, trim: true, lowercase: true },
-    grandCategories: [GrandCategorySchema], // Relation: SubCategory has many GrandCategory
+    grandCategories: [GrandCategorySchema],
 });
 
 const CategorySchema = new mongoose.Schema({
     name: { type: String, required: true, unique: true, trim: true, lowercase: true },
-    subCategories: [SubCategorySchema], // Relation: Category has many SubCategory
+    subCategories: [SubCategorySchema], 
 });
 
 const CatalogSchema = new mongoose.Schema({
     action: { type: String, required: true, enum: ['CREATE', 'UPDATE', 'DELETE'] },
     modelAffected: { type: String, required: true, enum: ['Category', 'SubCategory', 'GrandCategory'] },
-    performedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Users', required: true }, // Reference to User model
+    performedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Users', required: true }, 
     timestamp: { type: Date, default: Date.now },
-    details: { type: String }, // Optional field for extra information
+    details: { type: String }, 
 });
 
 const Category = mongoose.model('Category', CategorySchema);

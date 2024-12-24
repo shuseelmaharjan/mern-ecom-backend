@@ -202,7 +202,6 @@ class CategoryController {
         return res.status(404).json({ message: 'SubCategory not found.' });
       }
 
-      // Check for unique subcategory name within the same category
       if (category.subCategories.some((sub) => sub.name === name.toLowerCase() && sub.id !== subCategoryId)) {
         return res.status(409).json({ message: `SubCategory "${name}" already exists.` });
       }
@@ -351,7 +350,6 @@ class CategoryController {
         return res.status(404).json({ message: 'GrandCategory not found.' });
       }
 
-      // Ensure the new name is unique within the same subcategory
       if (subCategory.grandCategories.some((grand) => grand.name === name.toLowerCase() && grand.id !== grandCategoryId)) {
         return res.status(409).json({ message: `GrandCategory "${name}" already exists.` });
       }
@@ -395,7 +393,6 @@ class CategoryController {
         return res.status(404).json({ message: 'GrandCategory not found.' });
       }
 
-      // Remove the grand category using pull
       subCategory.grandCategories.pull({ _id: grandCategoryId });
       await category.save();
 
@@ -420,19 +417,16 @@ class CategoryController {
     try {
       const { categoryId, subCategoryId } = req.params;
 
-      // Find the category by its ID
       const category = await Category.findById(categoryId);
       if (!category) {
         return res.status(404).json({ message: 'Category not found.' });
       }
 
-      // Find the subcategory within the category
       const subCategory = category.subCategories.id(subCategoryId);
       if (!subCategory) {
         return res.status(404).json({ message: 'SubCategory not found.' });
       }
 
-      // Return the grand categories list
       return res.status(200).json({
         message: `GrandCategories of SubCategory "${subCategory.name}" in Category "${category.name}" fetched successfully.`,
         grandCategories: subCategory.grandCategories,
