@@ -260,6 +260,26 @@ class CategoryController {
   }
 
 
+  // @desc Get all SubCategories of a Category
+  // @route GET /api/v1/list-subcategories/:categoryId
+  // @access Public - Only accessible by staff and admin
+  static async listSubCategories(req, res) {
+    try {
+      const { categoryId } = req.params;
+
+      const category = await Category.findById(categoryId);
+      if (!category) {
+        return res.status(404).json({ message: 'Category not found.' });
+      }
+
+      return res.status(200).json({
+        message: `SubCategories of Category "${category.name}" fetched successfully.`,
+        subCategories: category.subCategories,
+      });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
 
   // @desc Create Grand Category
   // @route POST /api/v1/create-grandcategory/:categoryId/:subCategoryId
@@ -392,6 +412,36 @@ class CategoryController {
     }
   }
   
+
+  // @desc Get all GrandCategories of a SubCategory
+  // @route GET /api/v1/list-grandcategories/:categoryId/:subCategoryId
+  // @access Public - Only accessible by staff and admin
+  static async listGrandCategories(req, res) {
+    try {
+      const { categoryId, subCategoryId } = req.params;
+
+      // Find the category by its ID
+      const category = await Category.findById(categoryId);
+      if (!category) {
+        return res.status(404).json({ message: 'Category not found.' });
+      }
+
+      // Find the subcategory within the category
+      const subCategory = category.subCategories.id(subCategoryId);
+      if (!subCategory) {
+        return res.status(404).json({ message: 'SubCategory not found.' });
+      }
+
+      // Return the grand categories list
+      return res.status(200).json({
+        message: `GrandCategories of SubCategory "${subCategory.name}" in Category "${category.name}" fetched successfully.`,
+        grandCategories: subCategory.grandCategories,
+      });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
 }
 
 module.exports = CategoryController;

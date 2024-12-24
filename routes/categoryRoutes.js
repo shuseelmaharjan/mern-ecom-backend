@@ -13,11 +13,13 @@ router.get('/v1/list-categories', CategoryController.listCategory);
 router.post('/v1/create-subcategory/:categoryId', authMiddleware, CategoryController.createSubCategory);
 router.put('/v1/update-subcategory/:categoryId/:subCategoryId', authMiddleware, CategoryController.updateSubCategory);
 router.delete('/v1/delete-subcategory/:categoryId/:subCategoryId', authMiddleware, CategoryController.deleteSubCategory);
+router.get('/v1/list-subcategories/:categoryId', CategoryController.listSubCategories);
 
 
 // CRUD for GrandCategories
 router.post('/v1/create-grandcategory/:categoryId/:subCategoryId', authMiddleware, CategoryController.createGrandCategory);
 router.put('/v1/update-grandcategory/:categoryId/:subCategoryId/:grandCategoryId',authMiddleware,CategoryController.updateGrandCategory);
 router.delete('/v1/delete-grandcategory/:categoryId/:subCategoryId/:grandCategoryId',authMiddleware,CategoryController.deleteGrandCategory);
-  
+router.get('/v1/list-grandcategories/:categoryId/:subCategoryId', CategoryController.listGrandCategories);
+
 module.exports = router;
