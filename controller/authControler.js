@@ -259,6 +259,38 @@ const updateUserDetails = async (req, res) => {
 };
 
 
+const updateUserRoleFromUserToVendor = async (req, res) => {
+    try {
+        const userId = req.user.id;  
+
+        const userToUpdate = await User.findById(userId);
+        if (!userToUpdate) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        if (!userToUpdate.isUser) {
+            return res.status(400).json({ success: false, message: 'User must be of type "user" to be upgraded to "vendor"' });
+        }
+
+       
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { 
+                isVendor: true,
+                isUser: false,
+                lastUpdate: new Date()
+            },
+            { new: true } 
+        );
+
+        res.status(200).json({ success: true, message: 'User role updated successfully'});
+    } catch (error) {
+        res.status(400).json({ success: false, message: error.message });
+    }
+};
+
+
+
 
 
 
@@ -270,4 +302,5 @@ module.exports = {
     checkTokenValidity,
     refreshToken,
     updateUserDetails,
+    updateUserRoleFromUserToVendor,
 }

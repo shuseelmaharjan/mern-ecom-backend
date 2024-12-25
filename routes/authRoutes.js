@@ -3,6 +3,7 @@ const router = express.Router();
 const authController = require('../controller/authControler');
 const loginLimiter = require('../middleware/loginLimiter')
 const verifyJWT = require('../middleware/verifyJWT')
+const { verifyAccessToken, verifyUserRole } = require('../middleware/authVerifyUser');
 
 router.route('/v1/signup')
     .post(loginLimiter, authController.signup)
@@ -25,6 +26,8 @@ router.route('/v1/check-token')
 router.route('/v1/update-profile')
     .put(verifyJWT, authController.updateUserDetails);
 
+router.route('/v1/upgrade-to-vendor')
+    .put(verifyAccessToken, verifyUserRole, authController.updateUserRoleFromUserToVendor);
 
 
 

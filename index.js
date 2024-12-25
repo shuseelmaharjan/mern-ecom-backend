@@ -44,6 +44,10 @@ app.use('/api', catalogRoute);
 const productRoute = require('./routes/productRoutes');
 app.use('/api', productRoute);
 
+const shopRoutes = require('./routes/shopRoutes');
+app.use('/api', shopRoutes);
+
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
