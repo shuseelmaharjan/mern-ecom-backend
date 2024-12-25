@@ -41,6 +41,9 @@ app.use('/api', caetgoryRoutes);
 const catalogRoute = require('./routes/catalogRoutes');
 app.use('/api', catalogRoute);
 
+const productRoute = require('./routes/productRoutes');
+app.use('/api', productRoute);
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
