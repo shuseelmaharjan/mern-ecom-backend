@@ -1,0 +1,8 @@
+2024-12-26T15:28:58.820Z - message: 'Too many requests: Too many requests. Please try again later	POST	/v1/login	http://localhost:3000
+2024-12-26T15:29:05.757Z - message: 'Too many requests: Too many requests. Please try again later	POST	/v1/login	http://localhost:3000
+2024-12-26T15:29:05.932Z - message: 'Too many requests: Too many requests. Please try again later	POST	/v1/login	http://localhost:3000
+2024-12-26T15:29:17.204Z - message: 'Too many requests: Too many requests. Please try again later	POST	/v1/login	http://localhost:3000
+2024-12-26T15:29:27.976Z - message: 'Too many requests: Too many requests. Please try again later	POST	/v1/login	http://localhost:3000
+2024-12-26T15:29:46.499Z - message: 'Too many requests: Too many requests. Please try again later	POST	/v1/login	http://localhost:3000
+2024-12-26T17:52:48.782Z - message: 'Too many requests: Too many requests. Please try again later	POST	/v1/login	undefined
+2024-12-26T17:53:26.764Z - message: 'Too many requests: Too many requests. Please try again later	POST	/v1/login	http://localhost:3000

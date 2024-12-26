@@ -55,19 +55,23 @@ app.use('/api', shopRoutes);
 
 app.use(csrfProtection);
 app.get('/csrf-token', (req, res) => {
-  const csrfToken = req.csrfToken(); 
-  
+  const csrfToken = req.csrfToken();
+
   res.cookie('_csrf', csrfToken, {
-      httpOnly: true,        
-      secure: process.env.NODE_ENV === 'production', 
-      sameSite: 'Strict',      
-      maxAge: 3600000          
+    httpOnly: false,
+    secure: false, 
+    sameSite: 'Lax',
+    expires: new Date(Date.now() + 604800000) 
+
   });
+
+  
 
   res.set('X-CSRF-Token', csrfToken);
 
   res.status(200).json({ message: 'CSRF token set in header and cookie' });
 });
+
 
 
 
