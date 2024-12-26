@@ -4,8 +4,11 @@ const connectDB = require('./config/db');
 const { cors, corsOptions } = require('./middleware/cors');
 const path = require('path');
 const fs = require('fs');
+const csrf = require('csurf');
 
 const cookieParser = require('cookie-parser');
+
+const csrfProtection = csrf({ cookie: true });
 
 dotenv.config();
 connectDB();
@@ -15,8 +18,9 @@ const app = express();
 // Use the imported corsOptions
 app.use(cors(corsOptions));
 
-app.use(express.json());
 app.use(cookieParser());
+app.use(express.json());
+
 
 // Logging middleware to log every request
 app.use((req, res, next) => {
@@ -46,6 +50,25 @@ app.use('/api', productRoute);
 
 const shopRoutes = require('./routes/shopRoutes');
 app.use('/api', shopRoutes);
+
+
+
+app.use(csrfProtection);
+app.get('/csrf-token', (req, res) => {
+  const csrfToken = req.csrfToken(); 
+  
+  res.cookie('_csrf', csrfToken, {
+      httpOnly: true,        
+      secure: process.env.NODE_ENV === 'production', 
+      sameSite: 'Strict',      
+      maxAge: 3600000          
+  });
+
+  res.set('X-CSRF-Token', csrfToken);
+
+  res.status(200).json({ message: 'CSRF token set in header and cookie' });
+});
+
 
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

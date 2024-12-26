@@ -92,50 +92,61 @@ const login = asyncHandler(async (req, res) => {
 // @desc Refresh
 // @route GET /api/v1/refresh
 // @access Public - because access token has expired
-const refresh = (req, res) => {
+const refresh = async (req, res) => {
     const cookie = req.cookies;
-    if (!cookie?.rest) return res.status(401).json({ message: 'Cookie not found' });
+
+    // Check if the refresh token is present in cookies
+    if (!cookie?.rest) {
+        return res.status(401).json({ message: 'Refresh token not found in cookies' });
+    }
 
     const refreshToken = cookie.rest;
 
-    rest.verify(
-        refreshToken,
-        process.env.REFRESH_TOKEN_SECRET,
-        asyncHandler(async (err, decode) => {
-            if (err) return res.status(403).json({ message: 'Forbidden' });
+    // Verify the refresh token
+    rest.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, asyncHandler(async (err, decode) => {
+        if (err) {
+            return res.status(403).json({ message: 'Forbidden: Invalid refresh token' });
+        }
 
-            const foundUser = await User.findOne({ email: decode.email }).exec();
-            if (!foundUser) return res.status(401).json({ message: 'Unauthorized' });
+        // Find the user based on the email from the decoded refresh token
+        const foundUser = await User.findOne({ email: decode.email }).exec();
+        if (!foundUser) {
+            return res.status(401).json({ message: 'Unauthorized: User not found' });
+        }
 
-            // Determine the role
-            let role = '';
-            if (foundUser.isAdmin) {
-                role = 'admin';
-            } else if (foundUser.isVendor) {
-                role = 'vendor';
-            } else if (foundUser.isUser) {
-                role = 'user';
-            } else if (foundUser.isStaff) {
-                role = 'staff';
-            }
+        // Determine the role of the user
+        let role = '';
+        if (foundUser.isAdmin) {
+            role = 'admin';
+        } else if (foundUser.isVendor) {
+            role = 'vendor';
+        } else if (foundUser.isUser) {
+            role = 'user';
+        } else if (foundUser.isStaff) {
+            role = 'staff';
+        }
 
-            // Generate new accessToken with role
-            const accessToken = rest.sign(
-                {
-                    "UserInfo": {
-                        "email": foundUser.email,
-                        "id": foundUser._id,
-                        "role": role
-                    }
-                },
-                process.env.ACCESS_TOKEN_SECRET,
-                { expiresIn: '1hr' }
-            );
+        // Generate a new access token with the user's information
+        const accessToken = rest.sign(
+            {
+                "UserInfo": {
+                    "email": foundUser.email,
+                    "id": foundUser._id,
+                    "role": role
+                }
+            },
+            process.env.ACCESS_TOKEN_SECRET,
+            { expiresIn: '1hr' }
+        );
 
-            res.json({ accessToken });
-        })
-    );
+        // Return the new access token
+        res.json({ accessToken });
+    }));
 };
+
+
+
+
 
 // @desc Refresh
 // @route GET /api/v2/refresh
