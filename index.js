@@ -64,11 +64,6 @@ app.get('/csrf-token', (req, res) => {
     expires: new Date(Date.now() + 604800000) 
 
   });
-
-  
-
-  res.set('X-CSRF-Token', csrfToken);
-
   res.status(200).json({ message: 'CSRF token set in header and cookie' });
 });
 

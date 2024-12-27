@@ -3,7 +3,6 @@ const router = express.Router();
 const authController = require('../controller/authControler');
 const loginLimiter = require('../middleware/loginLimiter')
 const verifyJWT = require('../middleware/verifyJWT')
-const verifyCsrf = require('../middleware/validateCsrf')
 const { verifyAccessToken, verifyUserRole } = require('../middleware/authVerifyUser');
 
 router.route('/v1/signup')
@@ -13,10 +12,10 @@ router.route('/v1/login')
     .post(loginLimiter, authController.login)
 
 router.route('/v1/refresh')
-    .get(verifyCsrf, authController.refresh);
+    .get(authController.refresh);
 
 router.route('/v2/refresh')
-    .get(authController.refreshToken)
+    .get(authController.refreshT)
 
 router.route('/v1/logout')
     .post(authController.logout)

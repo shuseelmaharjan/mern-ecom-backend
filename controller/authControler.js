@@ -89,57 +89,56 @@ const login = asyncHandler(async (req, res) => {
 // @route GET /api/v1/refresh
 // @access Public - because access token has expired
 const refresh = async (req, res) => {
-    const cookie = req.cookies;
+    // Log headers and cookies for debugging
+    console.log('Request Headers:', req.headers);
+    console.log('Request Cookies:', req.cookies);
 
-    console.log(cookie);
-    // Check if the refresh token is present in cookies
+    const cookie = req.cookies;
     if (!cookie?._r) {
+        console.error('No refresh token found in cookies');
         return res.status(401).json({ message: 'Refresh token not found in cookies' });
     }
 
     const refreshToken = cookie._r;
+    console.log('Refresh Token:', refreshToken);
 
     // Verify the refresh token
-    _r.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, asyncHandler(async (err, decode) => {
-
+    _r.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, async (err, decode) => {
         if (err) {
+            console.error('Token verification error:', err);
             return res.status(403).json({ message: 'Forbidden: Invalid refresh token' });
         }
+        console.log('Decoded Token:', decode);
 
-        // Find the user based on the email from the decoded refresh token
         const foundUser = await User.findOne({ email: decode.email }).exec();
         if (!foundUser) {
+            console.error('User not found for email:', decode.email);
             return res.status(401).json({ message: 'Unauthorized: User not found' });
         }
 
-        // Determine the role of the user
-        let role = '';
-        if (foundUser.isAdmin) {
-            role = 'admin';
-        } else if (foundUser.isVendor) {
-            role = 'vendor';
-        } else if (foundUser.isUser) {
-            role = 'user';
-        } else if (foundUser.isStaff) {
-            role = 'staff';
-        }
+        const role = foundUser.isAdmin
+            ? 'admin'
+            : foundUser.isVendor
+            ? 'vendor'
+            : foundUser.isUser
+            ? 'user'
+            : 'staff';
 
-        // Generate a new access token with the user's information
         const accessToken = _r.sign(
             {
-                "UserInfo": {
-                    "email": foundUser.email,
-                    "id": foundUser._id,
-                    "role": role
-                }
+                UserInfo: {
+                    email: foundUser.email,
+                    id: foundUser._id,
+                    role: role,
+                },
             },
             process.env.ACCESS_TOKEN_SECRET,
             { expiresIn: '1hr' }
         );
 
-        // Return the new access token
+        console.log('Generated Access Token:', accessToken);
         res.json({ accessToken });
-    }));
+    });
 };
 
 
@@ -149,42 +148,65 @@ const refresh = async (req, res) => {
 // @desc Refresh
 // @route GET /api/v2/refresh
 // @access Public - second api to get new accessToken with refreshToken only in header
-const refreshToken = (req, res) => {
-    // Get the Bearer token from the Authorization header
-    const authHeader = req.headers['authorization'];
-    if (!authHeader) return res.status(401).json({ message: 'Authorization token missing' });
+const refreshT = async (req, res) => {
+    // Log headers for debugging
+    console.log('Request Headers:', req.headers);
 
-    const token = authHeader.split(' ')[1];  // Extract the token from "Bearer <token>"
-    if (!token) return res.status(401).json({ message: 'Invalid Authorization header format' });
+    const csrfToken = req.headers['x-csrf-token'];
+    const refreshToken = req.headers['_r'];
 
-    // Verify the token using the REFRESH_TOKEN_SECRET
-    _r.verify(token, process.env.REFRESH_TOKEN_SECRET, asyncHandler(async (err, decode) => {
+    if (!csrfToken) {
+        console.error('No CSRF token found in headers');
+        return res.status(401).json({ message: 'CSRF token not found in headers' });
+    }
+
+    if (!refreshToken) {
+        console.error('No refresh token found in headers');
+        return res.status(401).json({ message: 'Refresh token not found in headers' });
+    }
+
+    console.log('CSRF Token:', csrfToken);
+    console.log('Refresh Token:', refreshToken);
+
+    // Verify the refresh token
+    _r.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, async (err, decode) => {
         if (err) {
-            return res.status(403).json({ message: 'Forbidden' });  // Invalid token
+            console.error('Token verification error:', err);
+            return res.status(403).json({ message: 'Forbidden: Invalid refresh token' });
         }
+        console.log('Decoded Token:', decode);
 
-        // Find the user by email decoded from the refresh token
-        const foundUser = await User.findOne({ email: decode.email });
+        const foundUser = await User.findOne({ email: decode.email }).exec();
         if (!foundUser) {
-            return res.status(401).json({ message: 'Unauthorized' });  // User not found
+            console.error('User not found for email:', decode.email);
+            return res.status(401).json({ message: 'Unauthorized: User not found' });
         }
 
-        // Generate a new access token
+        const role = foundUser.isAdmin
+            ? 'admin'
+            : foundUser.isVendor
+            ? 'vendor'
+            : foundUser.isUser
+            ? 'user'
+            : 'staff';
+
         const accessToken = _r.sign(
             {
-                "UserInfo": {
-                    "email": foundUser.email,
-                    "id": foundUser._id,
+                UserInfo: {
+                    email: foundUser.email,
+                    id: foundUser._id,
+                    role: role,
                 },
             },
             process.env.ACCESS_TOKEN_SECRET,
-            { expiresIn: '1hr' }  // Access token expiration time (can adjust as needed)
+            { expiresIn: '1hr' }
         );
 
-        // Send the new access token in the response
+        console.log('Generated Access Token:', accessToken);
         res.json({ accessToken });
-    }));
-}
+    });
+};
+
 
 
 // @desc Logout
@@ -309,7 +331,7 @@ module.exports = {
     refresh,
     logout,
     checkTokenValidity,
-    refreshToken,
+    refreshT,
     updateUserDetails,
     updateUserRoleFromUserToVendor,
 }

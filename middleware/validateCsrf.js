@@ -1,4 +1,5 @@
 const validateCsrfToken = (req, res, next) => {
+    console.log(req.cookies);
     const csrfToken = req.cookies['_csrf']; 
     const csrfHeaderToken = req.headers['x-csrf-token']; 
 
