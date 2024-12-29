@@ -64,7 +64,6 @@ const ReturnExchangeSchema = new mongoose.Schema({
     },
 });
 
-// Define Main Product Schema
 const ProductSchema = new mongoose.Schema({
     title: { type: String, required: true },
     media: MediaSchema,
