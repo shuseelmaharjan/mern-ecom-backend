@@ -26,7 +26,7 @@ app.use(express.json());
 app.use((req, res, next) => {
     const { method, url } = req;
     console.log(`[${new Date().toISOString()}] ${method} request to ${url}`);
-    next();  // Call the next middleware or route handler
+    next(); 
 });
 
 const authRoute = require('./routes/authRoutes');
@@ -35,9 +35,6 @@ app.use('/api', authRoute);
 const shippingRoute = require('./routes/shippingRoutes');
 app.use('/api', shippingRoute);
 
-
-const themeAndLogoRoute = require('./routes/themeAndLogoRoutes');
-app.use('/api', themeAndLogoRoute);
 
 const caetgoryRoutes = require('./routes/categoryRoutes');
 app.use('/api', caetgoryRoutes);
@@ -52,6 +49,11 @@ const shopRoutes = require('./routes/shopRoutes');
 app.use('/api', shopRoutes);
 
 
+const siteRoutes = require("./routes/siteRoute");
+app.use("/api/v1", siteRoutes);
+
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use(csrfProtection);
 app.get('/csrf-token', (req, res) => {
@@ -68,58 +70,10 @@ app.get('/csrf-token', (req, res) => {
 });
 
 
-
-
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/images', express.static(path.join(__dirname, 'images')));
-
-
-app.get('/image-preview', async (req, res) => {
-    try {
-      // Fetch the theme and logo data from the database
-      const themeData = await ThemeAndLogo.findOne();
-  
-      if (!themeData || !themeData.logo || !themeData.logo.logoImage) {
-        return res.status(404).json({ message: 'Logo image not found in the database' });
-      }
-  
-      // The image path stored in the database (it could start with '/uploads/' or '/images/')
-      const logoImagePath = themeData.logo.logoImage;
-  
-      // Check if the path starts with either '/uploads' or '/images' (you can add more as needed)
-      if (logoImagePath.startsWith('/uploads')) {
-        // If the path starts with '/uploads', use the static middleware for 'uploads' directory
-        const filePath = path.join(__dirname, logoImagePath);
-        
-        // Check if the file exists and send it
-        if (fs.existsSync(filePath)) {
-          return res.sendFile(filePath);  
-        } else {
-          return res.status(404).json({ message: 'Image not found in the uploads folder' });
-        }
-      } else if (logoImagePath.startsWith('/images')) {
-        // If the path starts with '/images', use the static middleware for 'images' directory
-        const filePath = path.join(__dirname, logoImagePath);
-        
-        // Check if the file exists and send it
-        if (fs.existsSync(filePath)) {
-          return res.sendFile(filePath);  
-        } else {
-          return res.status(404).json({ message: 'Image not found in the images folder' });
-        }
-      } else {
-        // Handle other cases, or return a 404 if the path is invalid
-        return res.status(404).json({ message: 'Invalid image path in the database' });
-      }
-  
-    } catch (error) {
-      res.status(500).json({
-        message: 'An error occurred while retrieving the logo image',
-        error: error.message,
-      });
-    }
-  });
-  
+const uploadDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
   
 
 app.use((err, req, res, next) => {

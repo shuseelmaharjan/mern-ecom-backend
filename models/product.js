@@ -68,7 +68,6 @@ const ProductSchema = new mongoose.Schema({
     title: { type: String, required: true },
     media: MediaSchema,
     description: { type: String },
-    summary: { type: String },
     personalization: {
         enabled: { type: Boolean, required: true },
         productLimit: { type: Number },
