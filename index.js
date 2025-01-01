@@ -1,12 +1,12 @@
-const express = require('express');
-const dotenv = require('dotenv');
-const connectDB = require('./config/db');
-const { cors, corsOptions } = require('./middleware/cors');
-const path = require('path');
-const fs = require('fs');
-const csrf = require('csurf');
+const express = require("express");
+const dotenv = require("dotenv");
+const connectDB = require("./config/db");
+const { cors, corsOptions } = require("./middleware/cors");
+const path = require("path");
+const fs = require("fs");
+const csrf = require("csurf");
 
-const cookieParser = require('cookie-parser');
+const cookieParser = require("cookie-parser");
 
 const csrfProtection = csrf({ cookie: true });
 
@@ -21,68 +21,63 @@ app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
 
-
 // Logging middleware to log every request
 app.use((req, res, next) => {
-    const { method, url } = req;
-    console.log(`[${new Date().toISOString()}] ${method} request to ${url}`);
-    next(); 
+  const { method, url } = req;
+  console.log(`[${new Date().toISOString()}] ${method} request to ${url}`);
+  next();
 });
 
-const authRoute = require('./routes/authRoutes');
-app.use('/api', authRoute);
+const authRoute = require("./routes/authRoutes");
+app.use("/api", authRoute);
 
-const shippingRoute = require('./routes/shippingRoutes');
-app.use('/api', shippingRoute);
+const shippingRoute = require("./routes/shippingRoutes");
+app.use("/api", shippingRoute);
 
+const caetgoryRoutes = require("./routes/categoryRoutes");
+app.use("/api", caetgoryRoutes);
 
-const caetgoryRoutes = require('./routes/categoryRoutes');
-app.use('/api', caetgoryRoutes);
+const catalogRoute = require("./routes/catalogRoutes");
+app.use("/api", catalogRoute);
 
-const catalogRoute = require('./routes/catalogRoutes');
-app.use('/api', catalogRoute);
+const productRoute = require("./routes/productRoutes");
+app.use("/api", productRoute);
 
-const productRoute = require('./routes/productRoutes');
-app.use('/api', productRoute);
-
-const shopRoutes = require('./routes/shopRoutes');
-app.use('/api', shopRoutes);
-
+const shopRoutes = require("./routes/shopRoutes");
+app.use("/api", shopRoutes);
 
 const siteRoutes = require("./routes/siteRoute");
 app.use("/api/v1", siteRoutes);
 
-
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use(csrfProtection);
-app.get('/csrf-token', (req, res) => {
+app.get("/csrf-token", (req, res) => {
   const csrfToken = req.csrfToken();
 
-  res.cookie('_csrf', csrfToken, {
+  res.cookie("_csrf", csrfToken, {
     httpOnly: false,
-    secure: false, 
-    sameSite: 'Lax',
-    expires: new Date(Date.now() + 604800000) 
-
+    secure: false,
+    sameSite: "Lax",
+    expires: new Date(Date.now() + 604800000),
   });
-  res.status(200).json({ message: 'CSRF token set in header and cookie' });
+  res.status(200).json({ message: "CSRF token set in header and cookie" });
 });
-
 
 const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
-  
 
 app.use((err, req, res, next) => {
-    console.error('Error:', err.message);
-    res.status(err.status || 500).json({ message: 'An error occurred', error: err.message });
+  console.error("Error:", err.message);
+  res
+    .status(err.status || 500)
+    .json({ message: "An error occurred", error: err.message });
 });
 
-app.get('/', (req, res) => {
-    res.send('Hello, World!');
+app.get("/", (req, res) => {
+  res.send("Hello, World!");
 });
 
 const PORT = process.env.PORT || 5000;

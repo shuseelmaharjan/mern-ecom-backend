@@ -1,11 +1,11 @@
-const express = require('express');
-const ShippingController = require('../controller/shippingController');
+const express = require("express");
+const ShippingController = require("../controller/shippingController");
 const router = express.Router();
-const verifyJWT = require('../middleware/verifyJWT');
+const { verifyAccessToken } = require("../middleware/authJWT");
 
 // @CRUL -X POST
-// @-H "Authorization: Bearer accesstoken" 
-// @-H "Content-Type: application/json" 
+// @-H "Authorization: Bearer accesstoken"
+// @-H "Content-Type: application/json"
 // @-d - '{
 //     "fullName": "John Doe",
 //     "addressLine1": "123 Main St",
@@ -16,26 +16,29 @@ const verifyJWT = require('../middleware/verifyJWT');
 //     "country": "USA",
 //     "isDefault": true
 //   }'
-router.route('/v1/add-shipping-address').post(verifyJWT, ShippingController.addShippingAddress);
-
+router
+  .route("/v1/add-shipping-address")
+  .post(verifyAccessToken, ShippingController.addShippingAddress);
 
 // @CRUL -X GET
-// @-H "Authorization: Bearer accesstoken" 
-// @-H "Content-Type: application/json" 
-router.route('/v1/get-shipping-addresses').get(verifyJWT, ShippingController.getShippingAddress);
-
+// @-H "Authorization: Bearer accesstoken"
+// @-H "Content-Type: application/json"
+router
+  .route("/v1/get-shipping-addresses")
+  .get(verifyAccessToken, ShippingController.getShippingAddress);
 
 // @CRUL -X PUT
-// @-H "Authorization: Bearer accesstoken" 
-// @-H "Content-Type: application/json" 
-router.route('/v1/update-shipping-address/:addressId').put(verifyJWT, ShippingController.updateShippingAddress);
-
-
+// @-H "Authorization: Bearer accesstoken"
+// @-H "Content-Type: application/json"
+router
+  .route("/v1/update-shipping-address/:addressId")
+  .put(verifyAccessToken, ShippingController.updateShippingAddress);
 
 // @CRUL -X DELETE
-// @-H "Authorization: Bearer accesstoken" 
-// @-H "Content-Type: application/json" 
-router.route('/v1/delete-shipping-address/:addressId').delete(verifyJWT, ShippingController.deleteShippingAddress);
-
+// @-H "Authorization: Bearer accesstoken"
+// @-H "Content-Type: application/json"
+router
+  .route("/v1/delete-shipping-address/:addressId")
+  .delete(verifyAccessToken, ShippingController.deleteShippingAddress);
 
 module.exports = router;
