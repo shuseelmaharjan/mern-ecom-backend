@@ -1,91 +1,72 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-// Define Media Schema
 const MediaSchema = new mongoose.Schema({
-    images: [
-        {
-            url: { type: String, required: true },
-            primary: { type: Boolean, default: false },
-        }
-    ],
-    video: {
-        url: { type: String, required: false},
-    }
+  images: [
+    {
+      url: { type: String, required: false },
+    },
+  ],
 });
 
-// Define Variants Schema
-const VariantSchema = new mongoose.Schema({
-    enabled: { type: Boolean, required: true },
-    colors: {
-        enabled: { type: Boolean, default: false },
-        values: [
-            {
-                code: { type: String },
-                name: { type: String },
-            }
-        ],
-    },
-    sizes: {
-        enabled: { type: Boolean, default: false },
-        values: [{ name: { type: String, required: false } }]
-    }
-    
+const dimensionSchema = new mongoose.Schema({
+  width: { type: Number, required: false },
+  height: { type: Number, required: false },
 });
 
-// Define Shipping Services Schema
-const ShippingServiceSchema = new mongoose.Schema({
-    national: {
-        freeShipping: { type: Boolean, default: false },
-        fixedShipping: {
-            costOfDelivery: { type: Number },
-        },
-    },
-    international: {
-        freeShipping: { type: Boolean, default: false },
-        fixedShipping: {
-            costOfDelivery: { type: Number },
-        },
-    }
+const ColorSchema = new mongoose.Schema({
+  code: { type: String, required: false },
+  name: { type: String, required: false },
 });
 
 // Define Shipping Origin Schema
-const ShippingOriginSchema = new mongoose.Schema({
-    processingTime: { type: String },
-    services: ShippingServiceSchema,
+const shippingSchema = new mongoose.Schema({
+  service: { type: Boolean, required: true },
+  processingTime: { type: String },
+  freeShipping: { type: Boolean, default: false },
+  cod: { type: Number },
 });
 
-// Define Return and Exchange Schema
-const ReturnExchangeSchema = new mongoose.Schema({
-    enabled: { type: Boolean, required: true },
-    details: {
-        returnEnabled: { type: Boolean },
-        exchangeEnabled: { type: Boolean },
-        returnDays: { type: Number },
-    },
+const internationalShippingSchema = new mongoose.Schema({
+  service: { type: Boolean, required: true },
+  processingTime: { type: String },
+  freeShipping: { type: Boolean, default: false },
+  cod: { type: Number },
 });
 
 const ProductSchema = new mongoose.Schema({
-    title: { type: String, required: true },
-    media: MediaSchema,
-    description: { type: String },
-    personalization: {
-        enabled: { type: Boolean, required: true },
-        productLimit: { type: Number },
+  title: { type: String, required: true },
+  media: MediaSchema,
+  thumbnail: { type: String, required: true },
+  video: { type: String, required: false },
+  description: { type: String, required: true },
+  price: { type: Number, required: true },
+  quantity: { type: Number, required: true },
+  productLimit: { type: Number, required: false },
+  brand: { type: String, required: false },
+  weight: { type: Number, required: false },
+  dimension: dimensionSchema,
+  SKU: { type: String, required: false, sparse: true },
+  colors: [ColorSchema],
+  size: [{ type: String, required: false }],
+  tags: [{ type: String, required: false }],
+  materials: [{ type: String, required: false }],
+  shipping: shippingSchema,
+  internationalShipping: internationalShippingSchema,
+  returnAndExchange: [
+    {
+      days: { type: Number, required: false, default: null },
+      description: { type: String, required: false, default: null },
     },
-    price: { type: Number, required: true },
-    quantity: { type: Number, required: true },
-    SKU: { type: String, required: false, unique: true },
-    variants: VariantSchema,
-    tags: [{ type: String }],
-    materials: [{ type: String }],
-    shippingOrigin: ShippingOriginSchema,
-    returnAndExchange: ReturnExchangeSchema,
-    renewal: { type: Boolean, default: false },
-    expirationDate: { type: Date },
-    expired: { type: Boolean, default: false },
-    active: { type: Boolean, default: true },
-    createdAt: { type: Date, default: Date.now },
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  ],
+  renewal: { type: Boolean, default: false },
+  expDate: { type: Date },
+  active: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
 });
 
-module.exports = mongoose.model('Product', ProductSchema);
+module.exports = mongoose.model("Product", ProductSchema);
