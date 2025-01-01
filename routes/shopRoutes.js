@@ -3,11 +3,13 @@ const router = express.Router();
 const shopController = require('../controller/shopController');
 const { verifyAccessToken, verifyVendorRole } = require('../middleware/authVerifyUser');
 
+const upload = require('./../middleware/shopMiddlware');
+
 // Create a new shop
-router.post('/v1/create-shop', verifyAccessToken, shopController.create);
+router.post('/v1/create-shop', upload.single('shopLogo'), verifyAccessToken, shopController.create);
 
 // Update an existing shop
-router.put('/v1/update-shop/:id', verifyAccessToken, verifyVendorRole, shopController.update);
+router.put('/v1/update-shop/:id', upload.single('shopLogo'), verifyAccessToken, verifyVendorRole, shopController.update);
 
 // Deactivate a shop (set isActive to false)
 router.put('/v1/deactivate-shop/:id', verifyAccessToken, verifyVendorRole, shopController.deactivate);

@@ -1,12 +1,16 @@
 const ShopService = require('../services/shopService');
 
+
 class ShopController {
-    
+
     // Create Shop
     async create(req, res) {
         try {
             const userId = req.user.id;
-            const { shopName, ownerName, shopLogo, shopDescription } = req.body;
+            const { shopName, ownerName, shopDescription } = req.body;
+            
+            const shopLogo = req.file ? `/shop/${req.file.filename}` : null; 
+
             const newShopData = {
                 shopName,
                 ownerName,
@@ -27,7 +31,9 @@ class ShopController {
     async update(req, res) {
         try {
             const shopId = req.params.id;
-            const { shopName, ownerName, shopLogo, shopDescription } = req.body;
+            const { shopName, ownerName, shopDescription } = req.body;
+
+            const shopLogo = req.file ? `/shop/${req.file.filename}` : null; 
 
             const shopService = new ShopService(); 
             const result = await shopService.updateShop(shopId, {
@@ -43,7 +49,6 @@ class ShopController {
         }
     }
 
-    // Set Shop isActive to false
     async deactivate(req, res) {
         try {
             const shopId = req.params.id;

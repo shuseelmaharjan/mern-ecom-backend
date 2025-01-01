@@ -8,9 +8,10 @@ const asyncHandler = require('express-async-handler')
 // @access Public
 const signup = asyncHandler(async(req, res) => {
     try{
-            const { email, password} = req.body;
+            const {name, email, password} = req.body;
             const hashPassword = await bcrypt.hash(password, 10);
             const newUser = new User({
+                name,
                 email, 
                 password: hashPassword,
     
@@ -100,7 +101,6 @@ const refresh = async (req, res) => {
     }
 
     const refreshToken = cookie._r;
-    console.log('Refresh Token:', refreshToken);
 
     // Verify the refresh token
     _r.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, async (err, decode) => {
@@ -149,8 +149,6 @@ const refresh = async (req, res) => {
 // @route GET /api/v2/refresh
 // @access Public - second api to get new accessToken with refreshToken only in header
 const refreshT = async (req, res) => {
-    // Log headers for debugging
-    console.log('Request Headers:', req.headers);
 
     const csrfToken = req.headers['x-csrf-token'];
     const refreshToken = req.headers['_r'];
@@ -165,16 +163,12 @@ const refreshT = async (req, res) => {
         return res.status(401).json({ message: 'Refresh token not found in headers' });
     }
 
-    console.log('CSRF Token:', csrfToken);
-    console.log('Refresh Token:', refreshToken);
-
     // Verify the refresh token
     _r.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, async (err, decode) => {
         if (err) {
             console.error('Token verification error:', err);
             return res.status(403).json({ message: 'Forbidden: Invalid refresh token' });
         }
-        console.log('Decoded Token:', decode);
 
         const foundUser = await User.findOne({ email: decode.email }).exec();
         if (!foundUser) {
@@ -202,7 +196,6 @@ const refreshT = async (req, res) => {
             { expiresIn: '1hr' }
         );
 
-        console.log('Generated Access Token:', accessToken);
         res.json({ accessToken });
     });
 };
@@ -321,7 +314,20 @@ const updateUserRoleFromUserToVendor = async (req, res) => {
 };
 
 
+const userInfo = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select('-password -isAdmin -isUser -isVendor -isActive -isStaff -shippingAddresses');
 
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json(user);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
 
 
 
@@ -334,4 +340,5 @@ module.exports = {
     refreshT,
     updateUserDetails,
     updateUserRoleFromUserToVendor,
+    userInfo,
 }

@@ -29,6 +29,9 @@ router.route('/v1/update-profile')
 router.route('/v1/upgrade-to-vendor')
     .put(verifyAccessToken, verifyUserRole, authController.updateUserRoleFromUserToVendor);
 
+router.route('/v1/user-info')
+    .get(verifyAccessToken, authController.userInfo);
+
 
 
 module.exports = router;
