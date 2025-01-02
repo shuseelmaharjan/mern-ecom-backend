@@ -4,18 +4,32 @@ const MediaSchema = new mongoose.Schema({
   images: [
     {
       url: { type: String, required: false },
+      default: { type: Boolean, default: false },
     },
   ],
 });
 
-const dimensionSchema = new mongoose.Schema({
-  width: { type: Number, required: false },
-  height: { type: Number, required: false },
+const dimensionDetailsSchema = new mongoose.Schema({
+  width: { type: Number, required: false, default: null },
+  height: { type: Number, required: false, default: null },
 });
 
-const ColorSchema = new mongoose.Schema({
-  code: { type: String, required: false },
-  name: { type: String, required: false },
+const dimensionSchema = new mongoose.Schema({
+  isEnabled: { type: Boolean, required: true, default: false },
+  details: {
+    type: dimensionDetailsSchema,
+    required: false,
+    default: null,
+  },
+});
+const colorSchema = new mongoose.Schema({
+  isEnabled: { type: Boolean, required: true, default: false },
+  details: [
+    {
+      code: { type: String, required: false, default: null },
+      name: { type: String, required: false, default: null },
+    },
+  ],
 });
 
 // Define Shipping Origin Schema
@@ -36,7 +50,6 @@ const internationalShippingSchema = new mongoose.Schema({
 const ProductSchema = new mongoose.Schema({
   title: { type: String, required: true },
   media: MediaSchema,
-  thumbnail: { type: String, required: true },
   video: { type: String, required: false },
   description: { type: String, required: true },
   price: { type: Number, required: true },
@@ -46,18 +59,26 @@ const ProductSchema = new mongoose.Schema({
   weight: { type: Number, required: false },
   dimension: dimensionSchema,
   sku: { type: String, required: false, sparse: true },
-  colors: [ColorSchema],
+  colors: colorSchema,
   size: [{ type: String, required: false }],
   tags: [{ type: String, required: false }],
   materials: [{ type: String, required: false }],
   shipping: shippingSchema,
   internationalShipping: internationalShippingSchema,
-  returnAndExchange: [
-    {
-      days: { type: Number, required: false, default: null },
-      description: { type: String, required: false, default: null },
+  returnAndExchange: {
+    isEnabled: { type: Boolean, required: true, default: false },
+    details: {
+      type: {
+        days: { type: Number, required: false, default: null },
+        description: { type: String, required: false, default: null },
+      },
+      required: function () {
+        return this.isEnabled;
+      },
+      default: null,
     },
-  ],
+  },
+
   renewal: { type: Boolean, default: false },
   expDate: { type: Date },
   active: { type: Boolean, default: true },

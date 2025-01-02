@@ -5,7 +5,7 @@ const { verifyVendor } = require("./../middleware/authJWT");
 const uploadFiles = require("../middleware/product");
 
 router.post(
-  "/create",
+  "/v1/create-product",
   verifyVendor,
   uploadFiles,
   productController.createProduct
