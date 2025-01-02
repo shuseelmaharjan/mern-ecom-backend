@@ -1,60 +1,40 @@
-const Product = require('../models/product');
+const Product = require("../models/product");
 
 class ProductService {
-    async createProduct(productData) {
-        try {
-            const product = new Product(productData);
-            await product.save();
-            return { success: true, product };
-        } catch (error) {
-            throw new Error(error.message);
-        }
-    }
+  async createProduct(productData) {
+    const { files, createdBy } = productData;
 
-    async getProductById(productId) {
-        try {
-            const product = await Product.findById(productId);
-            if (!product) {
-                throw new Error('Product not found');
-            }
-            return product;
-        } catch (error) {
-            throw new Error(error.message);
-        }
-    }
+    const media = {
+      images: files.images
+        ? files.images.map((file) => ({ url: file.path }))
+        : [],
+    };
 
-    async updateProduct(productId, updatedData) {
-        try {
-            const product = await Product.findByIdAndUpdate(productId, updatedData, { new: true });
-            if (!product) {
-                throw new Error('Product not found');
-            }
-            return { success: true, product };
-        } catch (error) {
-            throw new Error(error.message);
-        }
-    }
+    const product = new Product({
+      ...productData,
+      media,
+      thumbnail: files.thumbnail ? files.thumbnail[0].path : undefined,
+      video: files.video ? files.video[0].path : undefined,
+      dimension: productData.dimension
+        ? JSON.parse(productData.dimension)
+        : undefined,
+      colors: productData.colors ? JSON.parse(productData.colors) : [],
+      size: productData.size ? JSON.parse(productData.size) : [],
+      tags: productData.tags ? JSON.parse(productData.tags) : [],
+      materials: productData.materials ? JSON.parse(productData.materials) : [],
+      shipping: productData.shipping
+        ? JSON.parse(productData.shipping)
+        : undefined,
+      internationalShipping: productData.internationalShipping
+        ? JSON.parse(productData.internationalShipping)
+        : undefined,
+      returnAndExchange: productData.returnAndExchange
+        ? JSON.parse(productData.returnAndExchange)
+        : [],
+    });
 
-    async deleteProduct(productId) {
-        try {
-            const product = await Product.findByIdAndDelete(productId);
-            if (!product) {
-                throw new Error('Product not found');
-            }
-            return { success: true };
-        } catch (error) {
-            throw new Error(error.message);
-        }
-    }
-
-    async getProductsByUser(userId) {
-        try {
-            const products = await Product.find({ createdBy: userId });
-            return products;
-        } catch (error) {
-            throw new Error(error.message);
-        }
-    }
+    return await product.save();
+  }
 }
 
 module.exports = ProductService;

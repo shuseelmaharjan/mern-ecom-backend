@@ -45,7 +45,7 @@ const ProductSchema = new mongoose.Schema({
   brand: { type: String, required: false },
   weight: { type: Number, required: false },
   dimension: dimensionSchema,
-  SKU: { type: String, required: false, sparse: true },
+  sku: { type: String, required: false, sparse: true },
   colors: [ColorSchema],
   size: [{ type: String, required: false }],
   tags: [{ type: String, required: false }],

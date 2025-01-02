@@ -1,76 +1,43 @@
 const ProductService = require("../services/productService");
+const jwt = require("jsonwebtoken");
 
 class ProductController {
   constructor() {
     this.productService = new ProductService();
   }
 
-  // Create new product
-  async create(req, res) {
+  createProduct = async (req, res) => {
     try {
-      const productData = req.body;
-      productData.createdBy = req.user.id;
-
-      const result = await this.productService.createProduct(productData);
-      res.status(201).json(result);
-    } catch (error) {
-      res.status(400).json({ success: false, message: error.message });
-    }
-  }
-
-  // Update an existing product
-  async update(req, res) {
-    try {
-      const productId = req.params.id;
-      const updatedData = req.body;
-
-      // Ensure the product belongs to the current user
-      const product = await this.productService.getProductById(productId);
-      if (product.createdBy.toString() !== req.user.id) {
-        return res
-          .status(403)
-          .json({ message: "You are not authorized to update this product" });
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const result = await this.productService.updateProduct(
-        productId,
-        updatedData
-      );
-      res.status(200).json(result);
-    } catch (error) {
-      res.status(400).json({ success: false, message: error.message });
-    }
-  }
-
-  // Delete an existing product
-  async delete(req, res) {
-    try {
-      const productId = req.params.id;
-
-      // Ensure the product belongs to the current user
-      const product = await this.productService.getProductById(productId);
-      if (product.createdBy.toString() !== req.user.id) {
-        return res
-          .status(403)
-          .json({ message: "You are not authorized to delete this product" });
+      const token = authHeader.split(" ")[1];
+      let userId;
+      try {
+        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        userId = decodedToken.UserInfo.id;
+      } catch (err) {
+        return res.status(401).json({ message: "Invalid token" });
       }
 
-      await this.productService.deleteProduct(productId);
-      res.status(200).json({ message: "Product deleted successfully" });
-    } catch (error) {
-      res.status(400).json({ success: false, message: error.message });
-    }
-  }
+      const files = req.files;
+      const productData = { ...req.body, files, createdBy: userId };
 
-  // List all products for the current user
-  async list(req, res) {
-    try {
-      const products = await this.productService.getProductsByUser(req.user.id);
-      res.status(200).json(products);
+      const savedProduct = await this.productService.createProduct(productData);
+
+      res.status(201).json({
+        message: "Product created successfully",
+        product: savedProduct,
+      });
     } catch (error) {
-      res.status(400).json({ success: false, message: error.message });
+      console.error(error);
+      res
+        .status(500)
+        .json({ message: "Failed to create product", error: error.message });
     }
-  }
+  };
 }
 
 module.exports = new ProductController();
