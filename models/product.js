@@ -32,7 +32,6 @@ const colorSchema = new mongoose.Schema({
   ],
 });
 
-// Define Shipping Origin Schema
 const shippingSchema = new mongoose.Schema({
   service: { type: Boolean, required: true },
   processingTime: { type: String },

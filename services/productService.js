@@ -15,37 +15,59 @@ class ProductService {
       }
     }
 
-    // let colors = [];
-    // if (productData.colors && Array.isArray(productData.colors)) {
-    //   productData.colors.forEach((color) => {
-    //     // Extract isEnabled and details if they exist
-    //     const isEnabled = color.isEnabled || false;
-    //     const details = [];
+    const size = Array.isArray(productData.size)
+      ? productData.size
+      : typeof productData.size === "string"
+      ? productData.size.split(",")
+      : [];
 
-    //     if (color.details && Array.isArray(color.details)) {
-    //       color.details.forEach((detail) => {
-    //         if (detail.code || detail.name) {
-    //           details.push({
-    //             code: detail.code || null,
-    //             name: detail.name || null,
-    //           });
-    //         }
-    //       });
-    //     }
+    const tags = Array.isArray(productData.tags)
+      ? productData.tags
+      : typeof productData.tags === "string"
+      ? productData.tags.split(",")
+      : [];
 
-    //     // Add to the colors array only if necessary
-    //     colors.push({
-    //       isEnabled,
-    //       details,
-    //     });
-    //   });
-    // }
-
-    const size = Array.isArray(productData.size) ? productData.size : [];
-    const tags = Array.isArray(productData.tags) ? productData.tags : [];
     const materials = Array.isArray(productData.materials)
       ? productData.materials
       : [];
+
+    let productColors = [];
+    if (productData.productColors) {
+      try {
+        productColors = JSON.parse(productData.productColors);
+      } catch (error) {
+        throw new Error("Invalid JSON format for productColors.");
+      }
+    }
+
+    if (productData.productColor) {
+      if (!Array.isArray(productColors) || productColors.length === 0) {
+        throw new Error("Product colors must be a non-empty array.");
+      }
+
+      productColors.forEach((color) => {
+        if (!color.code || !/^#[0-9A-Fa-f]{6}$/.test(color.code)) {
+          throw new Error(
+            `Invalid color code: ${color.code}. It should be a valid hex code.`
+          );
+        }
+        if (!color.color || typeof color.color !== "string") {
+          throw new Error(
+            `Invalid color name: ${color.color}. It should be a valid string.`
+          );
+        }
+      });
+    }
+
+    const colors = {
+      isEnabled: productData.productColor || false,
+      details: productData.productColor
+        ? productColors.map((color) => ({
+            code: color.code,
+            name: color.color,
+          }))
+        : [],
+    };
 
     const product = new Product({
       ...productData,
@@ -55,10 +77,10 @@ class ProductService {
       dimension: productData.dimension
         ? JSON.parse(productData.dimension)
         : undefined,
-      // colors,
       size,
       tags,
       materials,
+      colors,
       dimension: {
         isEnabled: productData.productDimension || false,
         details: productData.productDimension
@@ -69,15 +91,6 @@ class ProductService {
           : null,
       },
       media,
-      returnAndExchange: {
-        isEnabled: productData.returnExchange || false,
-        details: productData.returnExchange
-          ? {
-              days: productData.returningDays,
-              description: productData.returningDescription,
-            }
-          : null,
-      },
       shipping: {
         service: productData.shippingService,
         processingTime: productData.shippingTime,
@@ -89,6 +102,18 @@ class ProductService {
         processingTime: productData.internationalShippingTime,
         freeShipping: productData.internationalFreeShipping,
         cod: productData.internationalCod,
+      },
+      returnAndExchange: {
+        isEnabled: productData.returnExchange || false,
+        details: productData.returnExchange
+          ? {
+              days: productData.returningDays,
+              description: productData.returningDescription,
+            }
+          : {
+              days: null,
+              description: null,
+            },
       },
     });
 
