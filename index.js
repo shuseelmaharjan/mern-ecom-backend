@@ -49,6 +49,9 @@ app.use("/api", shopRoutes);
 const siteRoutes = require("./routes/siteRoute");
 app.use("/api/v1", siteRoutes);
 
+const chatRoute = require("./routes/chatRoutes");
+app.use("/api/v1", chatRoute);
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(
   "/media/uploads",
