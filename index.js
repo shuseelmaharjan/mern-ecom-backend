@@ -7,82 +7,75 @@ const fs = require("fs");
 const csrf = require("csurf");
 const http = require("http");
 const socketIo = require("socket.io");
-
 const cookieParser = require("cookie-parser");
-
-const csrfProtection = csrf({ cookie: true });
 
 dotenv.config();
 connectDB();
 
 const app = express();
+const csrfProtection = csrf({ cookie: true });
 
-// Use the imported corsOptions
+// Middleware
 app.use(cors(corsOptions));
-
 app.use(cookieParser());
 app.use(express.json());
-
-// Logging middleware to log every request
 app.use((req, res, next) => {
-  const { method, url } = req;
-  console.log(`[${new Date().toISOString()}] ${method} request to ${url}`);
+  console.log(
+    `[${new Date().toISOString()}] ${req.method} request to ${req.url}`
+  );
   next();
 });
 
+// Routes
 const authRoute = require("./routes/authRoutes");
-app.use("/api", authRoute);
-
 const shippingRoute = require("./routes/shippingRoutes");
-app.use("/api", shippingRoute);
-
-const caetgoryRoutes = require("./routes/categoryRoutes");
-app.use("/api", caetgoryRoutes);
-
+const categoryRoutes = require("./routes/categoryRoutes");
 const catalogRoute = require("./routes/catalogRoutes");
-app.use("/api", catalogRoute);
-
 const productRoute = require("./routes/productRoutes");
-app.use("/api", productRoute);
-
 const shopRoutes = require("./routes/shopRoutes");
-app.use("/api", shopRoutes);
-
 const siteRoutes = require("./routes/siteRoute");
+const chatRoute = require("./routes/chatRoutes");
+
+app.use("/api", authRoute);
+app.use("/api", shippingRoute);
+app.use("/api", categoryRoutes);
+app.use("/api", catalogRoute);
+app.use("/api", productRoute);
+app.use("/api", shopRoutes);
 app.use("/api/v1", siteRoutes);
+app.use("/api/v1", chatRoute);
+
+// Socket.IO Setup
+const server = http.createServer(app);
 
 const io = socketIo(server, {
   cors: {
-    origin: "*",
+    origin: "http://localhost:3000",
     methods: ["GET", "POST"],
   },
 });
 
 io.on("connection", (socket) => {
-  console.log("New client connected");
-
+  console.log("A user connected");
   socket.on("disconnect", () => {
-    console.log("Client disconnected");
+    console.log("A user disconnected");
   });
 });
 
 app.set("socketio", io);
 
-const chatRoute = require("./routes/chatRoutes");
-app.use("/api/v1", chatRoute);
-
+// Static Files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(
   "/media/uploads",
   express.static(path.join(__dirname, "media/uploads"))
 );
-
 app.use("/media/video", express.static(path.join(__dirname, "media/video")));
 
+// CSRF Protection
 app.use(csrfProtection);
 app.get("/csrf-token", (req, res) => {
   const csrfToken = req.csrfToken();
-
   res.cookie("_csrf", csrfToken, {
     httpOnly: false,
     secure: false,
@@ -92,11 +85,13 @@ app.get("/csrf-token", (req, res) => {
   res.status(200).json({ message: "CSRF token set in header and cookie" });
 });
 
+// Upload Directory Setup
 const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
 
+// Error Handling
 app.use((err, req, res, next) => {
   console.error("Error:", err.message);
   res
@@ -104,9 +99,11 @@ app.use((err, req, res, next) => {
     .json({ message: "An error occurred", error: err.message });
 });
 
+// Base Route
 app.get("/", (req, res) => {
   res.send("Hello, World!");
 });
 
+// Start Server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, console.log(`Server is running on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server is running on port ${PORT}`));

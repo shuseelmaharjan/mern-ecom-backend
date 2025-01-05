@@ -20,7 +20,6 @@ const sendMessage = async (senderId, receiverId, messageContent) => {
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
 
-// Get messages between two users
 const getMessages = async (userId, chatId) => {
   try {
     const messages = await Message.find({
@@ -29,8 +28,6 @@ const getMessages = async (userId, chatId) => {
         { sender: new ObjectId(chatId), receiver: new ObjectId(userId) },
       ],
     }).sort({ timestamp: 1 });
-
-    console.log("Fetched messages:", messages); // Add this line
 
     return messages;
   } catch (error) {
@@ -84,9 +81,6 @@ const getChatHistory = async (userId) => {
         },
       },
     ]);
-
-    console.log("Chat history:", chatHistory); // Add this line
-
     return chatHistory;
   } catch (error) {
     throw new Error("Error fetching chat history: " + error.message);
