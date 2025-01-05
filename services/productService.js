@@ -1,3 +1,4 @@
+const product = require("../models/product");
 const Product = require("../models/product");
 
 class ProductService {
@@ -123,6 +124,16 @@ class ProductService {
     } catch (error) {
       console.error("Error saving product:", error);
       throw error;
+    }
+  }
+
+  async getVendorProduct(userID) {
+    try {
+      const products = await Product.find({ createdBy: userID });
+      return products;
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      throw new Error("Failed to fetch products from the database");
     }
   }
 }

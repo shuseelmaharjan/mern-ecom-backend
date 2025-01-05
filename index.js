@@ -50,6 +50,12 @@ const siteRoutes = require("./routes/siteRoute");
 app.use("/api/v1", siteRoutes);
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(
+  "/media/uploads",
+  express.static(path.join(__dirname, "media/uploads"))
+);
+
+app.use("/media/video", express.static(path.join(__dirname, "media/video")));
 
 app.use(csrfProtection);
 app.get("/csrf-token", (req, res) => {

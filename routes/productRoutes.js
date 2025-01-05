@@ -11,4 +11,10 @@ router.post(
   productController.createProduct
 );
 
+router.get(
+  "/v1/vendor-product",
+  verifyVendor,
+  productController.getVendoProduct
+);
+
 module.exports = router;
