@@ -1,4 +1,4 @@
-const User = require("../models/User");
+const User = require("../models/users");
 const bcrypt = require("bcrypt");
 const asyncHandler = require("express-async-handler");
 const jwt = require("jsonwebtoken");
@@ -9,7 +9,6 @@ const jwt = require("jsonwebtoken");
 const signup = asyncHandler(async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    console.log(req.body);
     const hashPassword = await bcrypt.hash(password, 10);
     const newUser = new User({
       name,
@@ -56,6 +55,10 @@ const login = asyncHandler(async (req, res) => {
     role = "user";
   } else if (foundUser.isStaff) {
     role = "staff";
+  } else if (foundUser.isHr) {
+    role = "hr";
+  } else if (foundUser.isMarketing) {
+    role = "marketing";
   }
 
   const accessToken = jwt.sign(
@@ -127,13 +130,20 @@ const refresh = async (req, res) => {
           .json({ message: "Unauthorized: User not found" });
       }
 
-      const role = foundUser.isAdmin
-        ? "admin"
-        : foundUser.isVendor
-        ? "vendor"
-        : foundUser.isUser
-        ? "user"
-        : "staff";
+      let role = "";
+      if (foundUser.isAdmin) {
+        role = "admin";
+      } else if (foundUser.isVendor) {
+        role = "vendor";
+      } else if (foundUser.isUser) {
+        role = "user";
+      } else if (foundUser.isStaff) {
+        role = "staff";
+      } else if (foundUser.isHr) {
+        role = "hr";
+      } else if (foundUser.isMarketing) {
+        role = "marketing";
+      }
 
       const accessToken = _r.sign(
         {

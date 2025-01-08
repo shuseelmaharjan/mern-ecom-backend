@@ -9,7 +9,9 @@ class SiteController {
       }
 
       const result = await SiteService.insert(data);
-      res.status(201).json({ message: "Data inserted successfully", data: result });
+      res
+        .status(201)
+        .json({ message: "Data inserted successfully", data: result });
     } catch (error) {
       res.status(400).json({ message: error.message });
     }
@@ -23,7 +25,9 @@ class SiteController {
       }
 
       const result = await SiteService.update(data);
-      res.status(200).json({ message: "Data updated successfully", data: result });
+      res
+        .status(200)
+        .json({ message: "Data updated successfully", data: result });
     } catch (error) {
       res.status(400).json({ message: error.message });
     }
@@ -32,12 +36,13 @@ class SiteController {
   async getAll(req, res) {
     try {
       const result = await SiteService.getAll();
-      res.status(200).json({ message: "Data fetched successfully", data: result });
+      res
+        .status(200)
+        .json({ message: "Data fetched successfully", data: result });
     } catch (error) {
       res.status(400).json({ message: error.message });
     }
   }
-  
 }
 
 module.exports = new SiteController();

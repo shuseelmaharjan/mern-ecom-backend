@@ -35,6 +35,7 @@ const productRoute = require("./routes/productRoutes");
 const shopRoutes = require("./routes/shopRoutes");
 const siteRoutes = require("./routes/siteRoute");
 const chatRoute = require("./routes/chatRoutes");
+const userRoute = require("./routes/userRoutes");
 
 app.use("/api", authRoute);
 app.use("/api", shippingRoute);
@@ -44,6 +45,7 @@ app.use("/api", productRoute);
 app.use("/api", shopRoutes);
 app.use("/api/v1", siteRoutes);
 app.use("/api/v1", chatRoute);
+app.use("/api/", userRoute);
 
 // Socket.IO Setup
 const server = http.createServer(app);

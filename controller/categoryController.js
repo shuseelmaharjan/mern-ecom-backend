@@ -1,12 +1,10 @@
-const { Category, Catalog } = require('../models/categories');
-const User = require('../models/User');
-const { toLowerSentenceCase } = require('../utils/textUtils');
+const { Category, Catalog } = require("../models/categories");
+const User = require("../models/users");
+const { toLowerSentenceCase } = require("../utils/textUtils");
 
 class CategoryController {
-
-
   // @desc Default Constructor to record the activity log
-  static async recordCatalog(action, model, userId, details = '') {
+  static async recordCatalog(action, model, userId, details = "") {
     await Catalog.create({
       action,
       modelAffected: model,
@@ -17,7 +15,7 @@ class CategoryController {
 
   // @desc helper to find the name
   static validateName(name) {
-    return /^[a-zA-Z\s]+$/.test(name); 
+    return /^[a-zA-Z\s]+$/.test(name);
   }
 
   // @desc Create Category
@@ -30,22 +28,33 @@ class CategoryController {
 
       // category name validator
       if (!CategoryController.validateName(name)) {
-        return res.status(400).json({ message: 'Category name must contain only letters and spaces.' });
+        return res
+          .status(400)
+          .json({
+            message: "Category name must contain only letters and spaces.",
+          });
       }
 
       name = toLowerSentenceCase(name);
 
       const existingCategory = await Category.findOne({ name });
       if (existingCategory) {
-        return res.status(409).json({ message: `Category "${name}" already exists.` });
+        return res
+          .status(409)
+          .json({ message: `Category "${name}" already exists.` });
       }
 
       const user = await User.findById(userId);
-      if (!user) return res.status(404).json({ message: 'User not found' });
+      if (!user) return res.status(404).json({ message: "User not found" });
 
       const newCategory = await Category.create({ name });
 
-      await CategoryController.recordCatalog('CREATE', 'Category', userId, `Category "${name}" created by "${user.name}".`);
+      await CategoryController.recordCatalog(
+        "CREATE",
+        "Category",
+        userId,
+        `Category "${name}" created by "${user.name}".`
+      );
 
       return res.status(201).json(newCategory);
     } catch (err) {
@@ -62,29 +71,31 @@ class CategoryController {
       const { id: userId } = req.user;
 
       if (!categoryId.match(/^[0-9a-fA-F]{24}$/)) {
-        return res.status(400).json({ message: 'Invalid category ID format.' });
+        return res.status(400).json({ message: "Invalid category ID format." });
       }
 
       const category = await Category.findById(categoryId);
       if (!category) {
-        return res.status(404).json({ message: 'Category not found.' });
+        return res.status(404).json({ message: "Category not found." });
       }
 
       const user = await User.findById(userId);
       if (!user) {
-        return res.status(404).json({ message: 'User not found.' });
+        return res.status(404).json({ message: "User not found." });
       }
 
       await category.deleteOne();
 
       await CategoryController.recordCatalog(
-        'DELETE',
-        'Category',
+        "DELETE",
+        "Category",
         userId,
         `Category "${category.name}" deleted by "${user.name}".`
       );
 
-      return res.status(200).json({ message: `Category "${category.name}" deleted successfully.` });
+      return res
+        .status(200)
+        .json({ message: `Category "${category.name}" deleted successfully.` });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -100,34 +111,40 @@ class CategoryController {
       const { id: userId } = req.user;
 
       if (!categoryId.match(/^[0-9a-fA-F]{24}$/)) {
-        return res.status(400).json({ message: 'Invalid category ID format.' });
+        return res.status(400).json({ message: "Invalid category ID format." });
       }
 
       if (!CategoryController.validateName(name)) {
-        return res.status(400).json({ message: 'Category name must contain only letters and spaces.' });
+        return res
+          .status(400)
+          .json({
+            message: "Category name must contain only letters and spaces.",
+          });
       }
 
       name = toLowerSentenceCase(name);
 
       const category = await Category.findById(categoryId);
       if (!category) {
-        return res.status(404).json({ message: 'Category not found.' });
+        return res.status(404).json({ message: "Category not found." });
       }
 
       category.name = name;
       await category.save();
 
       const user = await User.findById(userId);
-      if (!user) return res.status(404).json({ message: 'User not found' });
+      if (!user) return res.status(404).json({ message: "User not found" });
 
       await CategoryController.recordCatalog(
-        'UPDATE',
-        'Category',
+        "UPDATE",
+        "Category",
         userId,
         `Category updated to "${name}" by "${user.name}".`
       );
 
-      return res.status(200).json({ message: `Category updated to "${name}" successfully.` });
+      return res
+        .status(200)
+        .json({ message: `Category updated to "${name}" successfully.` });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -145,8 +162,6 @@ class CategoryController {
     }
   }
 
-
-
   // @desc Create SubCategory
   // @route POST /api/v1/create-subcategory/:categoryId
   // @access Public - Only accessable by staff and admin
@@ -157,23 +172,39 @@ class CategoryController {
       const { id: userId } = req.user;
 
       if (!CategoryController.validateName(name)) {
-        return res.status(400).json({ message: 'Invalid name format. Only lowercase letters and spaces are allowed.' });
+        return res
+          .status(400)
+          .json({
+            message:
+              "Invalid name format. Only lowercase letters and spaces are allowed.",
+          });
       }
 
       const category = await Category.findById(categoryId);
       if (!category) {
-        return res.status(404).json({ message: 'Category not found.' });
+        return res.status(404).json({ message: "Category not found." });
       }
 
-      if (category.subCategories.some((sub) => sub.name === name.toLowerCase())) {
-        return res.status(409).json({ message: `Subcategory "${name}" already exists.` });
+      if (
+        category.subCategories.some((sub) => sub.name === name.toLowerCase())
+      ) {
+        return res
+          .status(409)
+          .json({ message: `Subcategory "${name}" already exists.` });
       }
 
       category.subCategories.push({ name: name.toLowerCase() });
       await category.save();
 
-      await CategoryController.recordCatalog('CREATE', 'SubCategory', userId, `SubCategory "${name}" added to Category "${category.name}".`);
-      return res.status(201).json({ message: `SubCategory "${name}" added successfully.` });
+      await CategoryController.recordCatalog(
+        "CREATE",
+        "SubCategory",
+        userId,
+        `SubCategory "${name}" added to Category "${category.name}".`
+      );
+      return res
+        .status(201)
+        .json({ message: `SubCategory "${name}" added successfully.` });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -189,40 +220,52 @@ class CategoryController {
       const { id: userId } = req.user;
 
       if (!CategoryController.validateName(name)) {
-        return res.status(400).json({ message: 'Invalid name format. Only lowercase letters and spaces are allowed.' });
+        return res
+          .status(400)
+          .json({
+            message:
+              "Invalid name format. Only lowercase letters and spaces are allowed.",
+          });
       }
 
       const category = await Category.findById(categoryId);
       if (!category) {
-        return res.status(404).json({ message: 'Category not found.' });
+        return res.status(404).json({ message: "Category not found." });
       }
 
       const subCategory = category.subCategories.id(subCategoryId);
       if (!subCategory) {
-        return res.status(404).json({ message: 'SubCategory not found.' });
+        return res.status(404).json({ message: "SubCategory not found." });
       }
 
-      if (category.subCategories.some((sub) => sub.name === name.toLowerCase() && sub.id !== subCategoryId)) {
-        return res.status(409).json({ message: `SubCategory "${name}" already exists.` });
+      if (
+        category.subCategories.some(
+          (sub) => sub.name === name.toLowerCase() && sub.id !== subCategoryId
+        )
+      ) {
+        return res
+          .status(409)
+          .json({ message: `SubCategory "${name}" already exists.` });
       }
 
       subCategory.name = name.toLowerCase();
       await category.save();
 
       await CategoryController.recordCatalog(
-        'UPDATE',
-        'SubCategory',
+        "UPDATE",
+        "SubCategory",
         userId,
         `SubCategory "${subCategory.name}" updated to "${name}" in Category "${category.name}".`
       );
 
-      return res.status(200).json({ message: `SubCategory updated to "${name}" successfully.` });
+      return res
+        .status(200)
+        .json({ message: `SubCategory updated to "${name}" successfully.` });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
   }
 
-  
   // @desc Delete SubCategory
   // @route DELETE /api/v1/delete-subcategory/:categoryId/:subCategoryId
   // @access Public - Only accessible by staff and admin
@@ -233,12 +276,12 @@ class CategoryController {
 
       const category = await Category.findById(categoryId);
       if (!category) {
-        return res.status(404).json({ message: 'Category not found.' });
+        return res.status(404).json({ message: "Category not found." });
       }
 
       const subCategory = category.subCategories.id(subCategoryId);
       if (!subCategory) {
-        return res.status(404).json({ message: 'SubCategory not found.' });
+        return res.status(404).json({ message: "SubCategory not found." });
       }
 
       // Remove the subcategory using pull
@@ -246,18 +289,21 @@ class CategoryController {
       await category.save();
 
       await CategoryController.recordCatalog(
-        'DELETE',
-        'SubCategory',
+        "DELETE",
+        "SubCategory",
         userId,
         `SubCategory "${subCategory.name}" deleted from Category "${category.name}".`
       );
 
-      return res.status(200).json({ message: `SubCategory "${subCategory.name}" deleted successfully.` });
+      return res
+        .status(200)
+        .json({
+          message: `SubCategory "${subCategory.name}" deleted successfully.`,
+        });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
   }
-
 
   // @desc Get all SubCategories of a Category
   // @route GET /api/v1/list-subcategories/:categoryId
@@ -268,7 +314,7 @@ class CategoryController {
 
       const category = await Category.findById(categoryId);
       if (!category) {
-        return res.status(404).json({ message: 'Category not found.' });
+        return res.status(404).json({ message: "Category not found." });
       }
 
       return res.status(200).json({
@@ -290,33 +336,46 @@ class CategoryController {
       const { id: userId } = req.user;
 
       if (!CategoryController.validateName(name)) {
-        return res.status(400).json({ message: 'Invalid name format. Only lowercase letters and spaces are allowed.' });
+        return res
+          .status(400)
+          .json({
+            message:
+              "Invalid name format. Only lowercase letters and spaces are allowed.",
+          });
       }
 
       const category = await Category.findById(categoryId);
       if (!category) {
-        return res.status(404).json({ message: 'Category not found.' });
+        return res.status(404).json({ message: "Category not found." });
       }
 
       const subCategory = category.subCategories.id(subCategoryId);
       if (!subCategory) {
-        return res.status(404).json({ message: 'SubCategory not found.' });
+        return res.status(404).json({ message: "SubCategory not found." });
       }
 
-      if (subCategory.grandCategories.some((grand) => grand.name === name.toLowerCase())) {
-        return res.status(409).json({ message: `GrandCategory "${name}" already exists.` });
+      if (
+        subCategory.grandCategories.some(
+          (grand) => grand.name === name.toLowerCase()
+        )
+      ) {
+        return res
+          .status(409)
+          .json({ message: `GrandCategory "${name}" already exists.` });
       }
 
       subCategory.grandCategories.push({ name: name.toLowerCase() });
       await category.save();
 
       await CategoryController.recordCatalog(
-        'CREATE',
-        'GrandCategory',
+        "CREATE",
+        "GrandCategory",
         userId,
         `GrandCategory "${name}" added to SubCategory "${subCategory.name}".`
       );
-      return res.status(201).json({ message: `GrandCategory "${name}" added successfully.` });
+      return res
+        .status(201)
+        .json({ message: `GrandCategory "${name}" added successfully.` });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -332,39 +391,53 @@ class CategoryController {
       const { id: userId } = req.user;
 
       if (!CategoryController.validateName(name)) {
-        return res.status(400).json({ message: 'Invalid name format. Only lowercase letters and spaces are allowed.' });
+        return res
+          .status(400)
+          .json({
+            message:
+              "Invalid name format. Only lowercase letters and spaces are allowed.",
+          });
       }
 
       const category = await Category.findById(categoryId);
       if (!category) {
-        return res.status(404).json({ message: 'Category not found.' });
+        return res.status(404).json({ message: "Category not found." });
       }
 
       const subCategory = category.subCategories.id(subCategoryId);
       if (!subCategory) {
-        return res.status(404).json({ message: 'SubCategory not found.' });
+        return res.status(404).json({ message: "SubCategory not found." });
       }
 
       const grandCategory = subCategory.grandCategories.id(grandCategoryId);
       if (!grandCategory) {
-        return res.status(404).json({ message: 'GrandCategory not found.' });
+        return res.status(404).json({ message: "GrandCategory not found." });
       }
 
-      if (subCategory.grandCategories.some((grand) => grand.name === name.toLowerCase() && grand.id !== grandCategoryId)) {
-        return res.status(409).json({ message: `GrandCategory "${name}" already exists.` });
+      if (
+        subCategory.grandCategories.some(
+          (grand) =>
+            grand.name === name.toLowerCase() && grand.id !== grandCategoryId
+        )
+      ) {
+        return res
+          .status(409)
+          .json({ message: `GrandCategory "${name}" already exists.` });
       }
 
       grandCategory.name = name.toLowerCase();
       await category.save();
 
       await CategoryController.recordCatalog(
-        'UPDATE',
-        'GrandCategory',
+        "UPDATE",
+        "GrandCategory",
         userId,
         `GrandCategory "${grandCategory.name}" updated to "${name}" in SubCategory "${subCategory.name}".`
       );
 
-      return res.status(200).json({ message: `GrandCategory updated to "${name}" successfully.` });
+      return res
+        .status(200)
+        .json({ message: `GrandCategory updated to "${name}" successfully.` });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -380,35 +453,38 @@ class CategoryController {
 
       const category = await Category.findById(categoryId);
       if (!category) {
-        return res.status(404).json({ message: 'Category not found.' });
+        return res.status(404).json({ message: "Category not found." });
       }
 
       const subCategory = category.subCategories.id(subCategoryId);
       if (!subCategory) {
-        return res.status(404).json({ message: 'SubCategory not found.' });
+        return res.status(404).json({ message: "SubCategory not found." });
       }
 
       const grandCategory = subCategory.grandCategories.id(grandCategoryId);
       if (!grandCategory) {
-        return res.status(404).json({ message: 'GrandCategory not found.' });
+        return res.status(404).json({ message: "GrandCategory not found." });
       }
 
       subCategory.grandCategories.pull({ _id: grandCategoryId });
       await category.save();
 
       await CategoryController.recordCatalog(
-        'DELETE',
-        'GrandCategory',
+        "DELETE",
+        "GrandCategory",
         userId,
         `GrandCategory "${grandCategory.name}" deleted from SubCategory "${subCategory.name}".`
       );
 
-      return res.status(200).json({ message: `GrandCategory "${grandCategory.name}" deleted successfully.` });
+      return res
+        .status(200)
+        .json({
+          message: `GrandCategory "${grandCategory.name}" deleted successfully.`,
+        });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
   }
-  
 
   // @desc Get all GrandCategories of a SubCategory
   // @route GET /api/v1/list-grandcategories/:categoryId/:subCategoryId
@@ -419,12 +495,12 @@ class CategoryController {
 
       const category = await Category.findById(categoryId);
       if (!category) {
-        return res.status(404).json({ message: 'Category not found.' });
+        return res.status(404).json({ message: "Category not found." });
       }
 
       const subCategory = category.subCategories.id(subCategoryId);
       if (!subCategory) {
-        return res.status(404).json({ message: 'SubCategory not found.' });
+        return res.status(404).json({ message: "SubCategory not found." });
       }
 
       return res.status(200).json({
@@ -435,7 +511,6 @@ class CategoryController {
       return res.status(500).json({ error: err.message });
     }
   }
-
 }
 
 module.exports = CategoryController;
