@@ -47,6 +47,13 @@ class TokenValidator {
     }
     return true;
   }
+
+  isHr() {
+    if (this.user.role !== "hr") {
+      throw new Error("The user is not a hr member");
+    }
+    return true;
+  }
 }
 
 // Helper function to extract token from headers
@@ -112,6 +119,7 @@ const verifyAdmin = verifyRole(TokenValidator.prototype.isAdmin);
 const verifyUser = verifyRole(TokenValidator.prototype.isUser);
 const verifyVendor = verifyRole(TokenValidator.prototype.isVendor);
 const verifyStaff = verifyRole(TokenValidator.prototype.isStaff);
+const verifyHr = verifyRole(TokenValidator.prototype.isHr);
 
 // Middleware to verify multiple roles
 const verifyRoles = (...allowedRoles) => {
@@ -154,5 +162,6 @@ module.exports = {
   verifyUser,
   verifyVendor,
   verifyStaff,
+  verifyHr,
   verifyRoles,
 };
