@@ -1,46 +1,36 @@
-const SiteService = require("../services/siteService");
+const siteService = require("../services/siteService");
+const RoleChecker = require("../helper/roleChecker");
+const GetUserId = require("../helper/getUserId");
 
 class SiteController {
-  async insert(req, res) {
+  async createSiteManagerData(req, res) {
     try {
-      let data = req.body;
-      if (req.file) {
-        data.logo = `/uploads/${req.file.filename}`;
+      const roleChecker = new RoleChecker(req);
+      const role = await roleChecker.getRole();
+      const userId = new GetUserId(req);
+      const id = await userId.getUserId();
+
+      if (role !== "admin") {
+        return res.status(500).json({ message: "Unauthorized" });
       }
 
-      const result = await SiteService.insert(data);
-      res
-        .status(201)
-        .json({ message: "Data inserted successfully", data: result });
+      const response = await siteService.createSiteManagerData(req, id);
+
+      res.status(response.status).json(response.data);
     } catch (error) {
-      res.status(400).json({ message: error.message });
+      console.error(error);
+      res.status(500).json({ message: error.message });
     }
   }
 
-  async update(req, res) {
+  async getSiteManagerData(req, res) {
     try {
-      let data = req.body;
-      if (req.file) {
-        data.logo = `/uploads/${req.file.filename}`;
-      }
+      const response = await siteService.getSiteManagerData();
 
-      const result = await SiteService.update(data);
-      res
-        .status(200)
-        .json({ message: "Data updated successfully", data: result });
+      res.status(response.status).json(response.data);
     } catch (error) {
-      res.status(400).json({ message: error.message });
-    }
-  }
-
-  async getAll(req, res) {
-    try {
-      const result = await SiteService.getAll();
-      res
-        .status(200)
-        .json({ message: "Data fetched successfully", data: result });
-    } catch (error) {
-      res.status(400).json({ message: error.message });
+      console.error(error);
+      res.status(500).json({ message: error.message });
     }
   }
 }

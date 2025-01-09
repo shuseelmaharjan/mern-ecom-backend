@@ -1,12 +1,16 @@
 const express = require("express");
-const SiteController = require("../controller/siteController");
-const upload = require("../middleware/upload");
+const siteController = require("../controller/siteController");
 const router = express.Router();
+const { verifyAdmin } = require("../middleware/authJWT");
+const siteLogoUploader = require("../middleware/siteLogoUploader");
 
-router.post("/site-manager", upload.single("logo"), (req, res) => SiteController.insert(req, res));
+router.post(
+  "/site-manager",
+  verifyAdmin,
+  siteLogoUploader.single("logo"),
+  siteController.createSiteManagerData
+);
 
-router.put("/site-manager", upload.single("logo"), (req, res) => SiteController.update(req, res));
-router.get("/site-manager", (req, res) => SiteController.getAll(req, res));
-
+router.get("/site-manager", siteController.getSiteManagerData);
 
 module.exports = router;
