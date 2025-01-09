@@ -1,6 +1,5 @@
 const { SiteManager, SiteLogModel } = require("../models/site");
 const User = require("../models/users");
-const path = require("path");
 
 class SiteService {
   constructor(user) {
@@ -20,7 +19,7 @@ class SiteService {
     await logEntry.save();
   }
 
-  async createSiteManagerData(req, id) {
+  async createSiteManagerData(body, userId, logoFilename) {
     try {
       const existingData = await SiteManager.findOne();
       if (existingData) {
@@ -32,11 +31,11 @@ class SiteService {
         };
       }
 
-      const { title, tagline, logo, description } = req.body;
+      const { title, tagline, description } = body;
       const newSiteData = new SiteManager({
         title,
         tagline,
-        logo,
+        logo: logoFilename,
         description,
       });
 
@@ -46,7 +45,7 @@ class SiteService {
         action: "added",
         field: "title",
         newValue: title,
-        user: id,
+        user: userId,
       });
 
       return {
@@ -55,6 +54,91 @@ class SiteService {
       };
     } catch (error) {
       console.error(error);
+      throw new Error(error.message);
+    }
+  }
+
+  async updateSiteManagerData(id, body, userId, logoFilename) {
+    try {
+      const siteManager = await SiteManager.findById(id);
+
+      if (!siteManager) {
+        return {
+          status: 404,
+          data: { message: "SiteManager document not found" },
+        };
+      }
+
+      const updateData = {};
+      const logs = [];
+
+      const { title, tagline, description } = body;
+
+      if (title && title !== siteManager.title) {
+        updateData.title = title;
+        logs.push({
+          action: "updated",
+          field: "title",
+          previousValue: siteManager.title,
+          newValue: title,
+          user: userId,
+        });
+      }
+
+      if (tagline && tagline !== siteManager.tagline) {
+        updateData.tagline = tagline;
+        logs.push({
+          action: "updated",
+          field: "tagline",
+          previousValue: siteManager.tagline,
+          newValue: tagline,
+          user: userId,
+        });
+      }
+
+      if (description && description !== siteManager.description) {
+        updateData.description = description;
+        // logs.push({
+        //   action: "updated",
+        //   field: "description",
+        //   previousValue: siteManager.description,
+        //   newValue: description,
+        //   user: userId,
+        // });
+      }
+
+      if (logoFilename && logoFilename !== siteManager.logo) {
+        updateData.logo = logoFilename;
+        // logs.push({
+        //   action: "updated",
+        //   field: "logo",
+        //   previousValue: siteManager.logo,
+        //   newValue: logoFilename,
+        //   user: userId,
+        // });
+      }
+
+      if (Object.keys(updateData).length === 0) {
+        return {
+          status: 400,
+          data: { message: "No changes detected to update" },
+        };
+      }
+
+      updateData.lastUpdated = new Date();
+
+      await SiteManager.findByIdAndUpdate(id, updateData);
+
+      if (logs.length > 0) {
+        await SiteLogModel.insertMany(logs);
+      }
+
+      return {
+        status: 200,
+        data: { message: "SiteManager data updated successfully" },
+      };
+    } catch (error) {
+      console.error("Error in updateSiteManagerData:", error.message);
       throw new Error(error.message);
     }
   }

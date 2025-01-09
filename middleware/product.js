@@ -1,15 +1,11 @@
 const multer = require("multer");
 const path = require("path");
 
-// Storage configuration for multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    // Check the fieldname for the appropriate directory
     if (file.fieldname === "thumbnail" || file.fieldname.startsWith("img")) {
-      // All image files (img1, img2, ... img8) will be stored in the 'uploads' folder
       cb(null, "media/uploads");
     } else if (file.fieldname === "video") {
-      // Video files will be stored in the 'video' folder
       cb(null, "media/video");
     } else {
       cb(new Error("Invalid fieldname"), null);

@@ -12,5 +12,10 @@ router.post(
 );
 
 router.get("/site-manager", siteController.getSiteManagerData);
+router.put(
+  "/site-manager/:id",
+  siteLogoUploader.single("logo"),
+  siteController.updateSiteManagerData
+);
 
 module.exports = router;
