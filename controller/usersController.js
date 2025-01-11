@@ -2,6 +2,63 @@ const userService = require("../services/authUserService");
 const RoleChecker = require("../helper/roleChecker");
 
 class UserController {
+  async createEmployee(req, res) {
+    const {
+      name,
+      email,
+      phone,
+      state,
+      city,
+      postalCode,
+      addressLine1,
+      addressLine2,
+      designation,
+      salary,
+      country,
+    } = req.body;
+
+    if (
+      !name ||
+      !email ||
+      !country ||
+      !phone ||
+      !state ||
+      !city ||
+      !postalCode ||
+      !addressLine1 ||
+      !designation ||
+      !salary
+    ) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+
+    try {
+      const newUser = await userService.createEmployee({
+        name,
+        email,
+        phone,
+        state,
+        city,
+        postalCode,
+        addressLine1,
+        addressLine2,
+        designation,
+        salary,
+        country,
+      });
+
+      res.status(201).json({
+        message: "Employee created successfully",
+        user: newUser,
+      });
+    } catch (error) {
+      console.error(error);
+      res
+        .status(500)
+        .json({ message: "Server error, please try again later." });
+    }
+  }
+
   async addHr(req, res) {
     try {
       const roleChecker = new RoleChecker(req);

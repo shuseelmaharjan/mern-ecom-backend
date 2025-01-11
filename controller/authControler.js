@@ -14,6 +14,7 @@ const signup = asyncHandler(async (req, res) => {
       name,
       email,
       password: hashPassword,
+      isUser: true,
     });
     const saveUser = await newUser.save();
 
@@ -49,14 +50,14 @@ const login = asyncHandler(async (req, res) => {
   let role = "";
   if (foundUser.isAdmin) {
     role = "admin";
+  } else if (foundUser.isHr) {
+    role = "hr";
   } else if (foundUser.isVendor) {
     role = "vendor";
   } else if (foundUser.isUser) {
     role = "user";
   } else if (foundUser.isStaff) {
     role = "staff";
-  } else if (foundUser.isHr) {
-    role = "hr";
   } else if (foundUser.isMarketing) {
     role = "marketing";
   }
@@ -77,6 +78,7 @@ const login = asyncHandler(async (req, res) => {
     {
       email: foundUser.email,
       name: foundUser.name,
+      role: role,
     },
     process.env.REFRESH_TOKEN_SECRET
   );
@@ -133,14 +135,14 @@ const refresh = async (req, res) => {
       let role = "";
       if (foundUser.isAdmin) {
         role = "admin";
+      } else if (foundUser.isHr) {
+        role = "hr";
       } else if (foundUser.isVendor) {
         role = "vendor";
       } else if (foundUser.isUser) {
         role = "user";
       } else if (foundUser.isStaff) {
         role = "staff";
-      } else if (foundUser.isHr) {
-        role = "hr";
       } else if (foundUser.isMarketing) {
         role = "marketing";
       }
@@ -197,13 +199,20 @@ const refreshT = async (req, res) => {
           .json({ message: "Unauthorized: User not found" });
       }
 
-      const role = foundUser.isAdmin
-        ? "admin"
-        : foundUser.isVendor
-        ? "vendor"
-        : foundUser.isUser
-        ? "user"
-        : "staff";
+      let role = "";
+      if (foundUser.isAdmin) {
+        role = "admin";
+      } else if (foundUser.isHr) {
+        role = "hr";
+      } else if (foundUser.isVendor) {
+        role = "vendor";
+      } else if (foundUser.isUser) {
+        role = "user";
+      } else if (foundUser.isStaff) {
+        role = "staff";
+      } else if (foundUser.isMarketing) {
+        role = "marketing";
+      }
 
       const accessToken = jwt.sign(
         {

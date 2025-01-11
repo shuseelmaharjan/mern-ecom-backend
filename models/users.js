@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const crypto = require("crypto");
 
 const shippingAddressSchema = mongoose.Schema({
   fullName: { type: String, required: true },
@@ -13,23 +14,69 @@ const shippingAddressSchema = mongoose.Schema({
   updatedAt: { type: Date, default: null },
 });
 
+const employeeSchema = mongoose.Schema({
+  employeeId: { type: String, required: false, unique: true },
+  designation: { type: String, required: true },
+  dateOfJoining: { type: Date, default: Date.now },
+  salary: { type: Number, required: true },
+});
+
+const emergencyContact = mongoose.Schema({
+  name: { type: String, required: true },
+  relationship: { type: String, required: true },
+  phoneNumber: { type: String, required: true },
+});
+
 const userSchema = mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  isAdmin: { type: Boolean, default: false },
-  isVendor: { type: Boolean, default: false },
-  isUser: { type: Boolean, default: true },
-  isHr: { type: Boolean, default: false },
-  isMarketing: { type: Boolean, default: false },
-  isStaff: { type: Boolean, default: false },
-  isActive: { type: Boolean, required: true, default: true },
   phoneNumber: { type: String, required: false, default: null },
   profileImg: { type: String, required: false, default: null },
+  isAdmin: { type: Boolean, default: null },
+  isVendor: { type: Boolean, default: null },
+  isUser: { type: Boolean, default: null },
+  isHr: { type: Boolean, default: null },
+  isMarketing: { type: Boolean, default: null },
+  isStaff: { type: Boolean, default: null },
+  isActive: { type: Boolean, required: true, default: true },
   createdAt: { type: Date, default: Date.now },
   lastUpdate: { type: Date, required: false, default: null },
-  shippingAddresses: [shippingAddressSchema],
   verified: { type: Boolean, default: false },
+  shippingAddresses: [shippingAddressSchema],
+  employee: employeeSchema,
+  emergencyContact: emergencyContact,
+  gender: {
+    type: String,
+    enum: ["Male", "Female", "Other"],
+    required: false,
+    default: null,
+  },
+});
+
+const generateEmployeeId = () => {
+  return crypto.randomBytes(4).toString("hex").toUpperCase();
+};
+
+userSchema.pre("save", async function (next) {
+  if (this.employee && !this.employee.employeeId) {
+    let isUnique = false;
+    let newEmployeeId = "";
+
+    while (!isUnique) {
+      newEmployeeId = generateEmployeeId();
+      const existingEmployee = await this.constructor.findOne({
+        "employee.employeeId": newEmployeeId,
+      });
+
+      if (!existingEmployee) {
+        isUnique = true;
+      }
+    }
+
+    this.employee.employeeId = newEmployeeId;
+  }
+  next();
 });
 
 module.exports = mongoose.model("Users", userSchema);

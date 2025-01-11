@@ -1,8 +1,82 @@
 // const { sendMail } = require("../helper/sendMail");
 const User = require("../models/users");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 
 class AuthService {
+  generatePassword() {
+    return crypto.randomBytes(4).toString("hex");
+  }
+
+  async createEmployee(userData) {
+    const {
+      name,
+      email,
+      country,
+      phone,
+      state,
+      city,
+      postalCode,
+      addressLine1,
+      addressLine2,
+      designation,
+      salary,
+    } = userData;
+
+    const password = this.generatePassword();
+    console.log(password);
+
+    let isAdmin = false;
+    let isHr = false;
+    let isMarketing = false;
+    let isStaff = false;
+
+    if (designation === "admin") {
+      isAdmin = true;
+    } else if (designation === "hr") {
+      isHr = true;
+    } else if (designation === "mm") {
+      isMarketing = true;
+    } else if (designation === "staff") {
+      isStaff = true;
+    }
+
+    const newUser = new User({
+      name,
+      email,
+      phoneNumber: phone,
+      shippingAddresses: [
+        {
+          fullName: name,
+          addressLine1,
+          addressLine2,
+          city,
+          state,
+          postalCode,
+          country,
+          isDefault: true,
+        },
+      ],
+      employee: {
+        designation,
+        salary,
+      },
+      password,
+      isAdmin,
+      isHr,
+      isMarketing,
+      isStaff,
+      isActive: true,
+    });
+
+    try {
+      const savedUser = await newUser.save();
+      return savedUser;
+    } catch (error) {
+      throw new Error("Error saving user: " + error.message);
+    }
+  }
+
   async addHr(userData) {
     const { name, email } = userData;
     const hashedPassword = await bcrypt.hash("admin", 10);
