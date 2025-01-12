@@ -79,6 +79,7 @@ const login = asyncHandler(async (req, res) => {
       email: foundUser.email,
       name: foundUser.name,
       role: role,
+      id: foundUser._id,
     },
     process.env.REFRESH_TOKEN_SECRET
   );

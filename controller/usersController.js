@@ -60,6 +60,7 @@ class UserController {
   }
 
   async updateUser(req, res) {
+    console.log(req.body);
     const { userId } = req.params;
     const {
       name,
@@ -122,6 +123,21 @@ class UserController {
       res
         .status(500)
         .json({ message: "Server error, please try again later." });
+    }
+  }
+
+  async getUserDetails(req, res) {
+    try {
+      const userId = req.params.id;
+
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+
+      const userDetails = await userService.getUserDetails(userId);
+      return res.status(200).json(userDetails);
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
     }
   }
 
@@ -240,6 +256,89 @@ class UserController {
       res.status(200).json({ message: "Success", staffs });
     } catch (err) {
       res.status(400).json({ message: err.message });
+    }
+  }
+
+  async settingUserInfo(req, res) {
+    try {
+      const { userId } = req.params;
+
+      if (!userId) {
+        return res.status(400).json({ message: "User id is required" });
+      }
+
+      const user = await userService.settingProfile(userId);
+      return res.status(200).json({ success: true, data: user });
+    } catch (error) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  async uploadUserImage(req, res) {
+    try {
+      const { userId } = req.params;
+
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded." });
+      }
+
+      const imagePath = req.file.path;
+      const updatedImagePath = await userService.updateUserProfileImage(
+        userId,
+        imagePath
+      );
+
+      res.status(200).json({
+        message: "Profile image uploaded successfully.",
+        profileImg: updatedImagePath,
+      });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ message: "An error occurred.", error: error.message });
+    }
+  }
+
+  async updateUserNmae(req, res) {
+    const { userId } = req.params;
+    const { name } = req.body;
+    try {
+      await userService.updateUserNmae(userId, name);
+      return res.status(200).json({ message: "Name updated successfully." });
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  }
+
+  async updateUserEmail(req, res) {
+    const { userId } = req.params;
+    const { email } = req.body;
+    try {
+      await userService.updateUserEmail(userId, email);
+      return res.status(200).json({ message: "Email updated successfully." });
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  }
+
+  async changePassword(req, res) {
+    try {
+      const { oldPassword, newPassword } = req.body;
+      const userId = req.user.id;
+
+      if (!oldPassword || !newPassword) {
+        return res.status(400).json({ message: "All fields are required." });
+      }
+
+      const message = await userService.changePassword(
+        userId,
+        oldPassword,
+        newPassword
+      );
+      return res.status(200).json({ message });
+    } catch (error) {
+      console.error("Error in changePassword:", error);
+      return res.status(400).json({ message: error.message });
     }
   }
 }

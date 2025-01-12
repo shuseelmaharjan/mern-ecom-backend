@@ -2,6 +2,7 @@
 const User = require("../models/users");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
+const mongoose = require("mongoose");
 
 class AuthService {
   generatePassword() {
@@ -23,8 +24,9 @@ class AuthService {
       salary,
     } = userData;
 
-    const password = this.generatePassword();
-    console.log(password);
+    const newPassword = this.generatePassword();
+    console.log(newPassword);
+    const password = await bcrypt.hash(newPassword, 10);
 
     let isAdmin = false;
     let isHr = false;
@@ -91,6 +93,14 @@ class AuthService {
       user.email = updates.email;
       user.phoneNumber = updates.phone;
 
+      // Designation updates
+      const designation = updates.designation;
+      user.isAdmin = designation === "admin";
+      user.isHr = designation === "hr";
+      user.isMarketing = designation === "mm";
+      user.isStaff = designation === "staff";
+
+      // Update default address if exists
       const defaultAddress = user.shippingAddresses.find(
         (address) => address.isDefault
       );
@@ -113,6 +123,36 @@ class AuthService {
       return await user.save();
     } catch (error) {
       throw new Error("Error updating user: " + error.message);
+    }
+  }
+
+  async getUserDetails(userId) {
+    try {
+      const user = await User.findById(userId).select("-password").lean();
+
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      let role = null;
+      if (user.isAdmin) role = "admin";
+      else if (user.isVendor) role = "vendor";
+      else if (user.isUser) role = "user";
+      else if (user.isHr) role = "hr";
+      else if (user.isMarketing) role = "mm";
+      else if (user.isStaff) role = "staff";
+
+      return {
+        name: user.name,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        role,
+        shippingAddresses: user.shippingAddresses,
+        employee: user.employee,
+        emergencyContact: user.emergencyContact,
+      };
+    } catch (error) {
+      throw new Error(error.message);
     }
   }
 
@@ -234,6 +274,113 @@ class AuthService {
     } catch (err) {
       throw new Error("Failed to fetch Staff members: " + err.message);
     }
+  }
+  async settingProfile(userId) {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(userId)) {
+        throw new Error("Invalid user ID format");
+      }
+
+      const data = await User.findById(userId, {
+        name: 1,
+        email: 1,
+        phoneNumber: 1,
+        profileImg: 1,
+        createdAt: 1,
+        verified: 1,
+        emergencyContact: 1,
+        gender: 1,
+        shippingAddresses: 1,
+      });
+
+      if (!data) {
+        throw new Error("User not found");
+      }
+
+      const defaultAddress = data.shippingAddresses.find(
+        (address) => address.isDefault
+      );
+
+      return {
+        ...data.toObject(),
+        defaultAddress: defaultAddress || null,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateUserProfileImage(userId, imagePath) {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error("User not found.");
+    }
+    user.profileImg = imagePath;
+    await user.save();
+    return user.profileImg;
+  }
+
+  async updateUserNmae(userId, name) {
+    if (!name) {
+      throw new Error("Name is required");
+    }
+    try {
+      const user = await User.findByIdAndUpdate(
+        userId,
+        { name },
+        { new: true }
+      );
+
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateUserEmail(userId, email) {
+    if (!email) {
+      throw new Error("Email is required");
+    }
+    try {
+      const user = await User.findByIdAndUpdate(
+        userId,
+        { email },
+        { new: true }
+      );
+
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async changePassword(userId, oldPassword, newPassword) {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error("User not found.");
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      throw new Error("Old password is incorrect.");
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    user.password = hashedPassword;
+    user.lastUpdate = new Date();
+    await user.save();
+
+    return "Password updated successfully.";
   }
 }
 

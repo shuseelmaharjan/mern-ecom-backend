@@ -70,6 +70,7 @@ app.set("socketio", io);
 
 // Static Files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/profile", express.static(path.join(__dirname, "profile")));
 app.use(
   "/media/uploads",
   express.static(path.join(__dirname, "media/uploads"))
