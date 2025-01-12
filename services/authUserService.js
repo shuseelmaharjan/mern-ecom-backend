@@ -46,13 +46,13 @@ class AuthService {
     const newUser = new User({
       name,
       email,
-      phoneNumber: phone,
       shippingAddresses: [
         {
           fullName: name,
           addressLine1,
           addressLine2,
           city,
+          phone,
           state,
           postalCode,
           country,

@@ -9,7 +9,10 @@ const shippingAddressSchema = mongoose.Schema({
   state: { type: String, required: true },
   postalCode: { type: String, required: true },
   country: { type: String, required: true },
+  phone: { type: String, require: true },
   isDefault: { type: Boolean, default: false },
+  isHome: { type: Boolean, default: false },
+  isOffice: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: null },
 });
@@ -31,7 +34,6 @@ const userSchema = mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  phoneNumber: { type: String, required: false, default: null },
   profileImg: { type: String, required: false, default: null },
   isAdmin: { type: Boolean, default: null },
   isVendor: { type: Boolean, default: null },
