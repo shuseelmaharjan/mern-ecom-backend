@@ -49,6 +49,53 @@ class UserShippingController {
       res.status(500).json({ success: false, message: error.message });
     }
   }
+
+  async updateShippingAddress(req, res) {
+    try {
+      const id = new GetUserId(req);
+      const userId = await id.getUserId();
+      const { shippingAddressId } = req.params;
+      const updateData = req.body;
+      console.log(userId);
+
+      console.log("Request body:", updateData);
+      console.log("Request params:", req.params);
+
+      const updatedUser = await ShippingService.updateShippingAddress(
+        userId,
+        shippingAddressId,
+        updateData
+      );
+
+      res.status(200).json({
+        message: "Shipping address updated successfully",
+        data: updatedUser,
+      });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+
+  async getShippingAddress(req, res) {
+    try {
+      const id = new GetUserId(req);
+      const userId = await id.getUserId();
+      const { shippingAddressId } = req.params;
+
+      const shippingAddress =
+        await ShippingService.getIndividualShippingAddress(
+          userId,
+          shippingAddressId
+        );
+
+      res.status(200).json({
+        message: "Shipping address fetched successfully",
+        data: shippingAddress,
+      });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
 }
 
 module.exports = new UserShippingController();

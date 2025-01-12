@@ -51,6 +51,46 @@ class ShippingService {
       throw new Error(error.message);
     }
   }
+
+  async updateShippingAddress(userId, shippingAddressId, updateData) {
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      const shippingAddress = user.shippingAddresses.id(shippingAddressId);
+      if (!shippingAddress) {
+        throw new Error("Shipping address not found");
+      }
+
+      Object.assign(shippingAddress, updateData);
+      user.lastUpdate = new Date();
+
+      await user.save();
+      return user;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  async getIndividualShippingAddress(userId, shippingAddressId) {
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      const shippingAddress = user.shippingAddresses.id(shippingAddressId);
+      if (!shippingAddress) {
+        throw new Error("Shipping address not found");
+      }
+
+      return shippingAddress;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
 }
 
 module.exports = new ShippingService();
