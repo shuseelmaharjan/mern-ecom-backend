@@ -77,6 +77,45 @@ class AuthService {
     }
   }
 
+  async findUserById(userId) {
+    try {
+      return await User.findById(userId);
+    } catch (error) {
+      throw new Error("Error finding user: " + error.message);
+    }
+  }
+
+  async updateUserDetails(user, updates) {
+    try {
+      user.name = updates.name;
+      user.email = updates.email;
+      user.phoneNumber = updates.phone;
+
+      const defaultAddress = user.shippingAddresses.find(
+        (address) => address.isDefault
+      );
+
+      if (defaultAddress) {
+        defaultAddress.fullName = updates.name;
+        defaultAddress.addressLine1 = updates.addressLine1;
+        defaultAddress.addressLine2 = updates.addressLine2 || null;
+        defaultAddress.city = updates.city;
+        defaultAddress.state = updates.state;
+        defaultAddress.postalCode = updates.postalCode;
+        defaultAddress.country = updates.country;
+      }
+
+      if (user.employee) {
+        user.employee.designation = updates.designation;
+        user.employee.salary = updates.salary;
+      }
+
+      return await user.save();
+    } catch (error) {
+      throw new Error("Error updating user: " + error.message);
+    }
+  }
+
   async addHr(userData) {
     const { name, email } = userData;
     const hashedPassword = await bcrypt.hash("admin", 10);

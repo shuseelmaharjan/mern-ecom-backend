@@ -6,6 +6,7 @@ const { verifyAdmin, verifyAccessToken } = require("../middleware/authJWT");
 router.post("/v1/hr", verifyAdmin, userController.addHr);
 router.get("/v1/hr", verifyAdmin, userController.getHrData);
 router.post("/v1/create-employee", userController.createEmployee);
+router.patch("/v1/update-user/:userId", userController.updateUser);
 
 router.post(
   "/v1/marketing-manager",

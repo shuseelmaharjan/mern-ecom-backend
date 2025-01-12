@@ -14,7 +14,7 @@ class EmployeeService {
       return employees.map((employee) => {
         let designation = "";
         if (employee.isAdmin) designation = "admin";
-        else if (employee.isMarketing) designation = "marketing manager";
+        else if (employee.isMarketing) designation = "mm";
         else if (employee.isHr) designation = "hr";
         else if (employee.isStaff) designation = "staff";
 
@@ -47,7 +47,7 @@ class EmployeeService {
 
       return employees.map((employee) => {
         let designation = "";
-        if (employee.isMarketing) designation = "marketing manager";
+        if (employee.isMarketing) designation = "mm";
         else if (employee.isStaff) designation = "staff";
 
         return {
@@ -63,6 +63,16 @@ class EmployeeService {
     } catch (error) {
       throw new Error("Failed to fetch employees: " + error.message);
     }
+  }
+
+  static async deactivateUser(userId) {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    user.isActive = false;
+    await user.save();
+    return user;
   }
 }
 

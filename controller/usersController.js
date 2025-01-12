@@ -59,6 +59,72 @@ class UserController {
     }
   }
 
+  async updateUser(req, res) {
+    const { userId } = req.params;
+    const {
+      name,
+      email,
+      phone,
+      country,
+      state,
+      city,
+      postalCode,
+      addressLine1,
+      addressLine2,
+      designation,
+      salary,
+    } = req.body;
+
+    if (
+      !name ||
+      !email ||
+      !phone ||
+      !country ||
+      !state ||
+      !city ||
+      !postalCode ||
+      !addressLine1 ||
+      !designation ||
+      !salary
+    ) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+
+    try {
+      const user = await userService.findUserById(userId);
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found." });
+      }
+
+      const updates = {
+        name,
+        email,
+        phone,
+        country,
+        state,
+        city,
+        postalCode,
+        addressLine1,
+        addressLine2,
+        designation,
+        salary,
+      };
+
+      const updatedUser = await userService.updateUserDetails(user, updates);
+
+      res.status(200).json({
+        message: "User updated successfully.",
+        user: updatedUser,
+      });
+    } catch (error) {
+      console.error(error);
+      res
+        .status(500)
+        .json({ message: "Server error, please try again later." });
+    }
+  }
+
   async addHr(req, res) {
     try {
       const roleChecker = new RoleChecker(req);
