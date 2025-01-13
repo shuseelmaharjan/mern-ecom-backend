@@ -96,6 +96,54 @@ class UserShippingController {
       res.status(400).json({ message: error.message });
     }
   }
+
+  async updateDefaultShippingAddress(req, res) {
+    try {
+      const id = new GetUserId(req);
+      const userId = await id.getUserId();
+      const { shippingId } = req.params;
+
+      if (!shippingId) {
+        return res.status(400).json({ error: "Shipping ID is required." });
+      }
+
+      const updatedAddress = await ShippingService.updateDefaultShippingAddress(
+        userId,
+        shippingId
+      );
+
+      res.status(200).json({
+        message: "Default shipping address updated successfully.",
+        data: updatedAddress,
+      });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async updateDefaultBillingAddress(req, res) {
+    try {
+      const id = new GetUserId(req);
+      const userId = await id.getUserId();
+      const { shippingId } = req.params;
+
+      if (!shippingId) {
+        return res.status(400).json({ error: "Shipping ID is required." });
+      }
+
+      const updatedAddress = await ShippingService.updateDefaultBillingAddress(
+        userId,
+        shippingId
+      );
+
+      res.status(200).json({
+        message: "Default billing address updated successfully.",
+        data: updatedAddress,
+      });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  }
 }
 
 module.exports = new UserShippingController();

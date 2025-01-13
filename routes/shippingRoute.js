@@ -27,4 +27,16 @@ router.get(
   shippingController.getShippingAddress
 );
 
+router.put(
+  "/v1/shipping-address/:shippingId/default",
+  verifyAccessToken,
+  shippingController.updateDefaultShippingAddress
+);
+
+router.put(
+  "/v1/billing-address/:shippingId/default",
+  verifyAccessToken,
+  shippingController.updateDefaultBillingAddress
+);
+
 module.exports = router;

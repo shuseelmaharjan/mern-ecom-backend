@@ -59,7 +59,7 @@ const login = asyncHandler(async (req, res) => {
   } else if (foundUser.isStaff) {
     role = "staff";
   } else if (foundUser.isMarketing) {
-    role = "marketing";
+    role = "mm";
   }
 
   const accessToken = jwt.sign(
@@ -145,7 +145,7 @@ const refresh = async (req, res) => {
       } else if (foundUser.isStaff) {
         role = "staff";
       } else if (foundUser.isMarketing) {
-        role = "marketing";
+        role = "mm";
       }
 
       const accessToken = _r.sign(
@@ -212,7 +212,7 @@ const refreshT = async (req, res) => {
       } else if (foundUser.isStaff) {
         role = "staff";
       } else if (foundUser.isMarketing) {
-        role = "marketing";
+        role = "mm";
       }
 
       const accessToken = jwt.sign(

@@ -11,6 +11,7 @@ const shippingAddressSchema = mongoose.Schema({
   country: { type: String, required: true },
   phone: { type: String, require: true },
   isDefault: { type: Boolean, default: false },
+  defaultBilling: { type: Boolean, default: false },
   isHome: { type: Boolean, default: false },
   isOffice: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
