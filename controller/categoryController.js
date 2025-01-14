@@ -1,516 +1,169 @@
-const { Category, Catalog } = require("../models/categories");
-const User = require("../models/users");
-const { toLowerSentenceCase } = require("../utils/textUtils");
+const categoryService = require("../services/categoryService");
+const RoleChecker = require("../helper/roleChecker");
+const GetUserId = require("../helper/getUserId");
 
 class CategoryController {
-  // @desc Default Constructor to record the activity log
-  static async recordCatalog(action, model, userId, details = "") {
-    await Catalog.create({
-      action,
-      modelAffected: model,
-      performedBy: userId,
-      details,
-    });
-  }
-
-  // @desc helper to find the name
-  static validateName(name) {
-    return /^[a-zA-Z\s]+$/.test(name);
-  }
-
-  // @desc Create Category
-  // @route POST /api/v1/create-category
-  // @access Private - Only accessable by staff and admin
-  static async createCategory(req, res) {
+  async createCategory(req, res) {
     try {
-      let { name } = req.body;
-      const { id: userId } = req.user;
+      const roleChecker = new RoleChecker(req);
+      const role = await roleChecker.getRole();
+      const userId = new GetUserId(req);
+      const id = await userId.getUserId();
 
-      // category name validator
-      if (!CategoryController.validateName(name)) {
-        return res
-          .status(400)
-          .json({
-            message: "Category name must contain only letters and spaces.",
-          });
+      if (role !== "mm") {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      await categoryService.createCategory(req.body, id);
+      res.status(201).json({
+        message: "Category created successfully.",
+      });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+
+  async updateCategory(req, res) {
+    try {
+      const roleChecker = new RoleChecker(req);
+      const role = await roleChecker.getRole();
+      const userId = new GetUserId(req);
+      const id = await userId.getUserId();
+
+      if (role !== "mm") {
+        return res.status(401).json({ message: "Unauthorized" });
       }
 
-      name = toLowerSentenceCase(name);
-
-      const existingCategory = await Category.findOne({ name });
-      if (existingCategory) {
-        return res
-          .status(409)
-          .json({ message: `Category "${name}" already exists.` });
-      }
-
-      const user = await User.findById(userId);
-      if (!user) return res.status(404).json({ message: "User not found" });
-
-      const newCategory = await Category.create({ name });
-
-      await CategoryController.recordCatalog(
-        "CREATE",
-        "Category",
-        userId,
-        `Category "${name}" created by "${user.name}".`
+      const category = await categoryService.updateCategory(
+        req.params.id,
+        req.body,
+        id
       );
 
-      return res.status(201).json(newCategory);
-    } catch (err) {
-      return res.status(500).json({ error: err.message });
+      res.status(200).json({
+        message: "Category updated successfully.",
+        data: category,
+      });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
     }
   }
 
-  // @desc Delete Category
-  // @route Delete /api/v1/delete-category/:id
-  // @access Private - Only accessable by staff and admin
-  static async deleteCategory(req, res) {
+  async deleteCategory(req, res) {
     try {
-      const { id: categoryId } = req.params;
-      const { id: userId } = req.user;
+      const roleChecker = new RoleChecker(req);
+      const role = await roleChecker.getRole();
+      const userId = new GetUserId(req);
+      const id = await userId.getUserId();
 
-      if (!categoryId.match(/^[0-9a-fA-F]{24}$/)) {
-        return res.status(400).json({ message: "Invalid category ID format." });
+      if (role !== "mm") {
+        return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const category = await Category.findById(categoryId);
-      if (!category) {
-        return res.status(404).json({ message: "Category not found." });
-      }
+      const category = await categoryService.deleteCategory(req.params.id, id);
 
-      const user = await User.findById(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found." });
-      }
-
-      await category.deleteOne();
-
-      await CategoryController.recordCatalog(
-        "DELETE",
-        "Category",
-        userId,
-        `Category "${category.name}" deleted by "${user.name}".`
-      );
-
-      return res
-        .status(200)
-        .json({ message: `Category "${category.name}" deleted successfully.` });
-    } catch (err) {
-      return res.status(500).json({ error: err.message });
+      res.status(200).json({
+        message: "Category deleted successfully.",
+        data: category,
+      });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
     }
   }
 
-  // @desc Update Category
-  // @route PUT /api/v1/update-category/:id
-  // @access Private - Only accessable by staff and admin
-  static async updateCategory(req, res) {
-    try {
-      const { id: categoryId } = req.params;
-      let { name } = req.body;
-      const { id: userId } = req.user;
-
-      if (!categoryId.match(/^[0-9a-fA-F]{24}$/)) {
-        return res.status(400).json({ message: "Invalid category ID format." });
-      }
-
-      if (!CategoryController.validateName(name)) {
-        return res
-          .status(400)
-          .json({
-            message: "Category name must contain only letters and spaces.",
-          });
-      }
-
-      name = toLowerSentenceCase(name);
-
-      const category = await Category.findById(categoryId);
-      if (!category) {
-        return res.status(404).json({ message: "Category not found." });
-      }
-
-      category.name = name;
-      await category.save();
-
-      const user = await User.findById(userId);
-      if (!user) return res.status(404).json({ message: "User not found" });
-
-      await CategoryController.recordCatalog(
-        "UPDATE",
-        "Category",
-        userId,
-        `Category updated to "${name}" by "${user.name}".`
-      );
-
-      return res
-        .status(200)
-        .json({ message: `Category updated to "${name}" successfully.` });
-    } catch (err) {
-      return res.status(500).json({ error: err.message });
-    }
-  }
-
-  // @desc List Category
-  // @route GET /api/v1/list-categories
-  // @access Public - Only accessable by staff and admin
-  static async listCategory(req, res) {
-    try {
-      const categories = await Category.find({});
-      return res.status(200).json(categories);
-    } catch (err) {
-      return res.status(500).json({ error: err.message });
-    }
-  }
-
-  // @desc Create SubCategory
-  // @route POST /api/v1/create-subcategory/:categoryId
-  // @access Public - Only accessable by staff and admin
-  static async createSubCategory(req, res) {
+  async createSubCategory(req, res) {
     try {
       const { categoryId } = req.params;
-      const { name } = req.body;
-      const { id: userId } = req.user;
+      const subCategoryData = req.body;
 
-      if (!CategoryController.validateName(name)) {
-        return res
-          .status(400)
-          .json({
-            message:
-              "Invalid name format. Only lowercase letters and spaces are allowed.",
-          });
+      const roleChecker = new RoleChecker(req);
+      const userIdHelper = new GetUserId(req);
+
+      const role = await roleChecker.getRole();
+      const userId = await userIdHelper.getUserId();
+
+      if (role !== "mm") {
+        return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const category = await Category.findById(categoryId);
-      if (!category) {
-        return res.status(404).json({ message: "Category not found." });
-      }
-
-      if (
-        category.subCategories.some((sub) => sub.name === name.toLowerCase())
-      ) {
-        return res
-          .status(409)
-          .json({ message: `Subcategory "${name}" already exists.` });
-      }
-
-      category.subCategories.push({ name: name.toLowerCase() });
-      await category.save();
-
-      await CategoryController.recordCatalog(
-        "CREATE",
-        "SubCategory",
-        userId,
-        `SubCategory "${name}" added to Category "${category.name}".`
-      );
-      return res
-        .status(201)
-        .json({ message: `SubCategory "${name}" added successfully.` });
-    } catch (err) {
-      return res.status(500).json({ error: err.message });
-    }
-  }
-
-  // @desc Update SubCategory
-  // @route PUT /api/v1/update-subcategory/:categoryId/:subCategoryId
-  // @access Public - Only accessible by staff and admin
-  static async updateSubCategory(req, res) {
-    try {
-      const { categoryId, subCategoryId } = req.params;
-      const { name } = req.body;
-      const { id: userId } = req.user;
-
-      if (!CategoryController.validateName(name)) {
-        return res
-          .status(400)
-          .json({
-            message:
-              "Invalid name format. Only lowercase letters and spaces are allowed.",
-          });
-      }
-
-      const category = await Category.findById(categoryId);
-      if (!category) {
-        return res.status(404).json({ message: "Category not found." });
-      }
-
-      const subCategory = category.subCategories.id(subCategoryId);
-      if (!subCategory) {
-        return res.status(404).json({ message: "SubCategory not found." });
-      }
-
-      if (
-        category.subCategories.some(
-          (sub) => sub.name === name.toLowerCase() && sub.id !== subCategoryId
-        )
-      ) {
-        return res
-          .status(409)
-          .json({ message: `SubCategory "${name}" already exists.` });
-      }
-
-      subCategory.name = name.toLowerCase();
-      await category.save();
-
-      await CategoryController.recordCatalog(
-        "UPDATE",
-        "SubCategory",
-        userId,
-        `SubCategory "${subCategory.name}" updated to "${name}" in Category "${category.name}".`
+      const category = await categoryService.addSubCategory(
+        categoryId,
+        subCategoryData,
+        userId
       );
 
-      return res
-        .status(200)
-        .json({ message: `SubCategory updated to "${name}" successfully.` });
-    } catch (err) {
-      return res.status(500).json({ error: err.message });
-    }
-  }
-
-  // @desc Delete SubCategory
-  // @route DELETE /api/v1/delete-subcategory/:categoryId/:subCategoryId
-  // @access Public - Only accessible by staff and admin
-  static async deleteSubCategory(req, res) {
-    try {
-      const { categoryId, subCategoryId } = req.params;
-      const { id: userId } = req.user;
-
-      const category = await Category.findById(categoryId);
-      if (!category) {
-        return res.status(404).json({ message: "Category not found." });
-      }
-
-      const subCategory = category.subCategories.id(subCategoryId);
-      if (!subCategory) {
-        return res.status(404).json({ message: "SubCategory not found." });
-      }
-
-      // Remove the subcategory using pull
-      category.subCategories.pull({ _id: subCategoryId });
-      await category.save();
-
-      await CategoryController.recordCatalog(
-        "DELETE",
-        "SubCategory",
-        userId,
-        `SubCategory "${subCategory.name}" deleted from Category "${category.name}".`
-      );
-
-      return res
-        .status(200)
-        .json({
-          message: `SubCategory "${subCategory.name}" deleted successfully.`,
-        });
-    } catch (err) {
-      return res.status(500).json({ error: err.message });
-    }
-  }
-
-  // @desc Get all SubCategories of a Category
-  // @route GET /api/v1/list-subcategories/:categoryId
-  // @access Public - Only accessible by staff and admin
-  static async listSubCategories(req, res) {
-    try {
-      const { categoryId } = req.params;
-
-      const category = await Category.findById(categoryId);
-      if (!category) {
-        return res.status(404).json({ message: "Category not found." });
-      }
-
-      return res.status(200).json({
-        message: `SubCategories of Category "${category.name}" fetched successfully.`,
-        subCategories: category.subCategories,
+      res.status(201).json({
+        message: "Subcategory created successfully",
+        category,
       });
-    } catch (err) {
-      return res.status(500).json({ error: err.message });
+    } catch (error) {
+      console.error("Error creating subcategory:", error.message);
+      res.status(500).json({ message: error.message });
     }
   }
 
-  // @desc Create Grand Category
-  // @route POST /api/v1/create-grandcategory/:categoryId/:subCategoryId
-  // @access Public - Only accessable by staff and admin
-  static async createGrandCategory(req, res) {
+  async createGrandCategory(req, res) {
     try {
       const { categoryId, subCategoryId } = req.params;
-      const { name } = req.body;
-      const { id: userId } = req.user;
+      const grandCategoryData = req.body;
 
-      if (!CategoryController.validateName(name)) {
-        return res
-          .status(400)
-          .json({
-            message:
-              "Invalid name format. Only lowercase letters and spaces are allowed.",
-          });
+      const roleChecker = new RoleChecker(req);
+      const userIdHelper = new GetUserId(req);
+
+      const role = await roleChecker.getRole();
+      const userId = await userIdHelper.getUserId();
+
+      if (role !== "mm") {
+        return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const category = await Category.findById(categoryId);
-      if (!category) {
-        return res.status(404).json({ message: "Category not found." });
-      }
-
-      const subCategory = category.subCategories.id(subCategoryId);
-      if (!subCategory) {
-        return res.status(404).json({ message: "SubCategory not found." });
-      }
-
-      if (
-        subCategory.grandCategories.some(
-          (grand) => grand.name === name.toLowerCase()
-        )
-      ) {
-        return res
-          .status(409)
-          .json({ message: `GrandCategory "${name}" already exists.` });
-      }
-
-      subCategory.grandCategories.push({ name: name.toLowerCase() });
-      await category.save();
-
-      await CategoryController.recordCatalog(
-        "CREATE",
-        "GrandCategory",
-        userId,
-        `GrandCategory "${name}" added to SubCategory "${subCategory.name}".`
-      );
-      return res
-        .status(201)
-        .json({ message: `GrandCategory "${name}" added successfully.` });
-    } catch (err) {
-      return res.status(500).json({ error: err.message });
-    }
-  }
-
-  // @desc Update GrandCategory
-  // @route PUT /api/v1/update-grandcategory/:categoryId/:subCategoryId/:grandCategoryId
-  // @access Public - Only accessible by staff and admin
-  static async updateGrandCategory(req, res) {
-    try {
-      const { categoryId, subCategoryId, grandCategoryId } = req.params;
-      const { name } = req.body;
-      const { id: userId } = req.user;
-
-      if (!CategoryController.validateName(name)) {
-        return res
-          .status(400)
-          .json({
-            message:
-              "Invalid name format. Only lowercase letters and spaces are allowed.",
-          });
-      }
-
-      const category = await Category.findById(categoryId);
-      if (!category) {
-        return res.status(404).json({ message: "Category not found." });
-      }
-
-      const subCategory = category.subCategories.id(subCategoryId);
-      if (!subCategory) {
-        return res.status(404).json({ message: "SubCategory not found." });
-      }
-
-      const grandCategory = subCategory.grandCategories.id(grandCategoryId);
-      if (!grandCategory) {
-        return res.status(404).json({ message: "GrandCategory not found." });
-      }
-
-      if (
-        subCategory.grandCategories.some(
-          (grand) =>
-            grand.name === name.toLowerCase() && grand.id !== grandCategoryId
-        )
-      ) {
-        return res
-          .status(409)
-          .json({ message: `GrandCategory "${name}" already exists.` });
-      }
-
-      grandCategory.name = name.toLowerCase();
-      await category.save();
-
-      await CategoryController.recordCatalog(
-        "UPDATE",
-        "GrandCategory",
-        userId,
-        `GrandCategory "${grandCategory.name}" updated to "${name}" in SubCategory "${subCategory.name}".`
+      const category = await categoryService.addGrandCategory(
+        categoryId,
+        subCategoryId,
+        grandCategoryData,
+        userId
       );
 
-      return res
-        .status(200)
-        .json({ message: `GrandCategory updated to "${name}" successfully.` });
-    } catch (err) {
-      return res.status(500).json({ error: err.message });
-    }
-  }
-
-  // @desc Delete GrandCategory
-  // @route DELETE /api/v1/delete-grandcategory/:categoryId/:subCategoryId/:grandCategoryId
-  // @access Public - Only accessible by staff and admin
-  static async deleteGrandCategory(req, res) {
-    try {
-      const { categoryId, subCategoryId, grandCategoryId } = req.params;
-      const { id: userId } = req.user;
-
-      const category = await Category.findById(categoryId);
-      if (!category) {
-        return res.status(404).json({ message: "Category not found." });
-      }
-
-      const subCategory = category.subCategories.id(subCategoryId);
-      if (!subCategory) {
-        return res.status(404).json({ message: "SubCategory not found." });
-      }
-
-      const grandCategory = subCategory.grandCategories.id(grandCategoryId);
-      if (!grandCategory) {
-        return res.status(404).json({ message: "GrandCategory not found." });
-      }
-
-      subCategory.grandCategories.pull({ _id: grandCategoryId });
-      await category.save();
-
-      await CategoryController.recordCatalog(
-        "DELETE",
-        "GrandCategory",
-        userId,
-        `GrandCategory "${grandCategory.name}" deleted from SubCategory "${subCategory.name}".`
-      );
-
-      return res
-        .status(200)
-        .json({
-          message: `GrandCategory "${grandCategory.name}" deleted successfully.`,
-        });
-    } catch (err) {
-      return res.status(500).json({ error: err.message });
-    }
-  }
-
-  // @desc Get all GrandCategories of a SubCategory
-  // @route GET /api/v1/list-grandcategories/:categoryId/:subCategoryId
-  // @access Public - Only accessible by staff and admin
-  static async listGrandCategories(req, res) {
-    try {
-      const { categoryId, subCategoryId } = req.params;
-
-      const category = await Category.findById(categoryId);
-      if (!category) {
-        return res.status(404).json({ message: "Category not found." });
-      }
-
-      const subCategory = category.subCategories.id(subCategoryId);
-      if (!subCategory) {
-        return res.status(404).json({ message: "SubCategory not found." });
-      }
-
-      return res.status(200).json({
-        message: `GrandCategories of SubCategory "${subCategory.name}" in Category "${category.name}" fetched successfully.`,
-        grandCategories: subCategory.grandCategories,
+      res.status(201).json({
+        message: "Grandcategory created successfully",
+        category,
       });
-    } catch (err) {
-      return res.status(500).json({ error: err.message });
+    } catch (error) {
+      console.error("Error creating grandcategory:", error.message);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async getAllCategory(req, res) {
+    try {
+      const activeCategories = await categoryService.getAllCategory();
+      if (!activeCategories || activeCategories.length === 0) {
+        return res.status(404).json({ message: "No active categories found." });
+      }
+
+      return res.status(200).json(activeCategories);
+    } catch (error) {
+      console.error(error);
+      return res
+        .status(500)
+        .json({ message: "Server error, please try again." });
+    }
+  }
+
+  async getCategory(req, res) {
+    try {
+      const activeCategories = await categoryService.getCategory();
+      if (!activeCategories || activeCategories.length === 0) {
+        return res.status(404).json({ message: "No active categories found." });
+      }
+
+      return res.status(200).json(activeCategories);
+    } catch (error) {
+      console.error(error);
+      return res
+        .status(500)
+        .json({ message: "Server error, please try again." });
     }
   }
 }
 
-module.exports = CategoryController;
+module.exports = new CategoryController();

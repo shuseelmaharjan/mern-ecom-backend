@@ -1,66 +1,40 @@
 const express = require("express");
-const router = express.Router();
-const CategoryController = require("../controller/categoryController");
-const { verifyRoles } = require("../middleware/authJWT");
+const { upload, processImage } = require("../middleware/imageProcessor");
+const categoryController = require("../controller/categoryController");
 
-// CRUD for Categories
+const router = express.Router();
+
 router.post(
   "/v1/create-category",
-  verifyRoles("vendor", "admin"),
-  CategoryController.createCategory
-);
-router.delete(
-  "/v1/delete-category/:id",
-  verifyRoles("vendor", "admin"),
-  CategoryController.deleteCategory
-);
-router.put(
-  "/v1/update-category/:id",
-  verifyRoles("vendor", "admin"),
-  CategoryController.updateCategory
-);
-router.get("/v1/list-categories", CategoryController.listCategory);
-
-// CRUD for SubCategories
-router.post(
-  "/v1/create-subcategory/:categoryId",
-  verifyRoles("vendor", "admin"),
-  CategoryController.createSubCategory
-);
-router.put(
-  "/v1/update-subcategory/:categoryId/:subCategoryId",
-  verifyRoles("vendor", "admin"),
-  CategoryController.updateSubCategory
-);
-router.delete(
-  "/v1/delete-subcategory/:categoryId/:subCategoryId",
-  verifyRoles("vendor", "admin"),
-  CategoryController.deleteSubCategory
-);
-router.get(
-  "/v1/list-subcategories/:categoryId",
-  CategoryController.listSubCategories
+  upload.single("image"),
+  processImage,
+  categoryController.createCategory
 );
 
-// CRUD for GrandCategories
-router.post(
-  "/v1/create-grandcategory/:categoryId/:subCategoryId",
-  verifyRoles("vendor", "admin"),
-  CategoryController.createGrandCategory
-);
 router.put(
-  "/v1/update-grandcategory/:categoryId/:subCategoryId/:grandCategoryId",
-  verifyRoles("vendor", "admin"),
-  CategoryController.updateGrandCategory
+  "/category/:id",
+  upload.single("image"),
+  processImage,
+  categoryController.updateCategory
 );
-router.delete(
-  "/v1/delete-grandcategory/:categoryId/:subCategoryId/:grandCategoryId",
-  verifyRoles("vendor", "admin"),
-  CategoryController.deleteGrandCategory
+
+router.delete("/category/:id", categoryController.deleteCategory);
+
+router.post(
+  "/v1/subcategory/:categoryId",
+  upload.single("image"),
+  processImage,
+  categoryController.createSubCategory
 );
-router.get(
-  "/v1/list-grandcategories/:categoryId/:subCategoryId",
-  CategoryController.listGrandCategories
+
+router.post(
+  "/v1/grandcategory/:categoryId/:subCategoryId",
+  upload.single("image"),
+  processImage,
+  categoryController.createGrandCategory
 );
+
+router.get("/v1/categories/active", categoryController.getAllCategory);
+router.get("/v1/categories/all", categoryController.getCategory);
 
 module.exports = router;
