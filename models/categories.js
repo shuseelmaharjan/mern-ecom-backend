@@ -12,6 +12,10 @@ const GrandCategorySchema = new mongoose.Schema({
 });
 
 const SubCategorySchema = new mongoose.Schema({
+  _id: {
+    type: mongoose.Schema.Types.ObjectId,
+    default: () => new mongoose.Types.ObjectId(),
+  }, // Use `new`
   name: {
     type: String,
     trim: true,
@@ -54,11 +58,10 @@ const CatalogSchema = new mongoose.Schema({
   },
   performedAt: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Category",
     required: true,
   },
-  timestamp: { type: Date, default: Date.now },
   details: { type: String },
+  timestamp: { type: Date, default: Date.now },
 });
 
 const Category = mongoose.model("Category", CategorySchema);

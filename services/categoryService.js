@@ -1,4 +1,5 @@
 const { Category, Catalog } = require("../models/categories");
+const mongoose = require("mongoose");
 
 class CategoryService {
   async createCategory(data, userId) {
@@ -50,7 +51,9 @@ class CategoryService {
       );
     }
 
+    // Create the new subcategory with a unique _id
     const newSubCategory = {
+      _id: new mongoose.Types.ObjectId(),
       name,
       image,
       grandCategories: [],
@@ -60,18 +63,23 @@ class CategoryService {
     category.subCategories.push(newSubCategory);
     await category.save();
 
-    const subCategory = category.subCategories.find((sub) => sub.name === name);
+    // Use the _id of the newly added subcategory for retrieval
+    const subCategory = category.subCategories.id(newSubCategory._id);
+
+    if (!subCategory) {
+      throw new Error("Failed to retrieve the newly created subcategory.");
+    }
 
     const catalogEntry = await Catalog.create({
       action: "INSERT",
       modelAffected: "SubCategory",
       performedBy: userId,
-      performedAt: subCategory._id,
+      performedAt: subCategory._id, // Use the correct _id
       details: `Created subcategory with name: ${name} in category: ${category.name}`,
     });
 
     return {
-      ...newSubCategory,
+      ...subCategory.toObject(),
       activity: catalogEntry,
     };
   }
@@ -103,12 +111,17 @@ class CategoryService {
       );
     }
 
-    const newGrandCategory = { name, image, isActive: true };
+    const newGrandCategory = {
+      _id: new mongoose.Types.ObjectId(),
+      name,
+      image,
+      isActive: true,
+    };
     subCategory.grandCategories.push(newGrandCategory);
     await category.save();
 
     const grandCategory = subCategory.grandCategories.find(
-      (grand) => grand.name === name
+      (grand) => grand._id.toString() === newGrandCategory._id.toString()
     );
 
     const catalogEntry = await Catalog.create({
