@@ -11,15 +11,6 @@ router.post(
   categoryController.createCategory
 );
 
-router.put(
-  "/category/:id",
-  upload.single("image"),
-  processImage,
-  categoryController.updateCategory
-);
-
-router.delete("/category/:id", categoryController.deleteCategory);
-
 router.post(
   "/v1/subcategory/:categoryId",
   upload.single("image"),
@@ -36,5 +27,15 @@ router.post(
 
 router.get("/v1/categories/active", categoryController.getAllCategory);
 router.get("/v1/categories/all", categoryController.getCategory);
+//remove categories
+router.put("/v1/remove-category/:id", categoryController.updateRemoveCategory);
+router.put(
+  "/v1/remove-subcategory/:parentId/:subId",
+  categoryController.updateRemoveSubCategory
+);
+router.put(
+  "/v1/remove-grandcategory/:parentId/:subId/:grandId",
+  categoryController.updateRemoveGrandCategory
+);
 
 module.exports = router;

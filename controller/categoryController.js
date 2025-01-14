@@ -1,6 +1,7 @@
 const categoryService = require("../services/categoryService");
 const RoleChecker = require("../helper/roleChecker");
 const GetUserId = require("../helper/getUserId");
+const deleteService = require("../services/removeCategoryService");
 
 class CategoryController {
   async createCategory(req, res) {
@@ -162,6 +163,76 @@ class CategoryController {
       return res
         .status(500)
         .json({ message: "Server error, please try again." });
+    }
+  }
+
+  async updateRemoveCategory(req, res) {
+    try {
+      const { id } = req.params;
+      const roleChecker = new RoleChecker(req);
+      const userIdHelper = new GetUserId(req);
+
+      const role = await roleChecker.getRole();
+      const userId = await userIdHelper.getUserId();
+
+      const category = await deleteService.updateCategory(userId, id);
+      res
+        .status(200)
+        .json({ message: "Category updated successfully", data: category });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+
+  async updateRemoveSubCategory(req, res) {
+    try {
+      const { parentId, subId } = req.params;
+      const roleChecker = new RoleChecker(req);
+      const userIdHelper = new GetUserId(req);
+
+      const role = await roleChecker.getRole();
+      const userId = await userIdHelper.getUserId();
+
+      const subCategory = await deleteService.updateSubCategory(
+        userId,
+        parentId,
+        subId
+      );
+      res.status(200).json({
+        message: "SubCategory updated successfully",
+        data: subCategory,
+      });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+
+  async updateRemoveGrandCategory(req, res) {
+    try {
+      const { parentId, subId, grandId } = req.params;
+
+      const roleChecker = new RoleChecker(req);
+      const userIdHelper = new GetUserId(req);
+
+      const role = await roleChecker.getRole();
+      const userId = await userIdHelper.getUserId();
+
+      if (role !== "mm") {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const grandCategory = await deleteService.updateGrandCategory(
+        userId,
+        parentId,
+        subId,
+        grandId
+      );
+      res.status(200).json({
+        message: "GrandCategory updated successfully",
+        data: grandCategory,
+      });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
     }
   }
 }
