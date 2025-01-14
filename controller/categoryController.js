@@ -226,53 +226,62 @@ class CategoryController {
   }
 
   async updateSubCategory(req, res) {
-    const { categoryId } = req.params;
-    const updateData = req.body;
-    const roleChecker = new RoleChecker(req);
-    const userIdHelper = new GetUserId(req);
-
-    const role = await roleChecker.getRole();
-    const userId = await userIdHelper.getUserId();
-
-    if (role !== "mm") {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
     try {
+      const { catId, id } = req.params;
+      const updateData = req.body;
+      const roleChecker = new RoleChecker(req);
+      const userIdHelper = new GetUserId(req);
+
+      const role = await roleChecker.getRole();
+      const userId = await userIdHelper.getUserId();
+
+      if (role !== "mm") {
+        return res
+          .status(403)
+          .json({ message: "Unauthorized: Insufficient permissions." });
+      }
+
       const updatedSubCategory = await CategoryUpdateService.updateSubCategory(
+        userId,
+        catId,
         id,
-        updateData,
-        performedBy,
-        details
+        updateData
       );
-      return res.status(200).json({
-        message: "SubCategory updated successfully.",
+
+      res.status(200).json({
+        message: "Subcategory updated successfully.",
         updatedRecord: updatedSubCategory,
       });
     } catch (error) {
-      return res.status(500).json({ error: error.message });
+      res.status(error.message.includes("not found") ? 404 : 500).json({
+        message: error.message,
+      });
     }
   }
 
   async updateGrandCategory(req, res) {
-    const { id } = req.params;
-    const updateData = req.body;
-    const { performedBy, details } = req.body;
-
     try {
+      const { catId, subId, id } = req.params;
+      const updateData = req.body;
+      const userId = req.userId;
+
       const updatedGrandCategory =
         await CategoryUpdateService.updateGrandCategory(
+          userId,
+          catId,
+          subId,
           id,
-          updateData,
-          performedBy,
-          details
+          updateData
         );
-      return res.status(200).json({
-        message: "GrandCategory updated successfully.",
+
+      res.status(200).json({
+        message: "Grand category updated successfully.",
         updatedRecord: updatedGrandCategory,
       });
     } catch (error) {
-      return res.status(500).json({ error: error.message });
+      res.status(error.message.includes("not found") ? 404 : 500).json({
+        message: error.message,
+      });
     }
   }
 }

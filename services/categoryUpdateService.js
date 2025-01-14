@@ -36,45 +36,62 @@ class CategoryUpdateService {
     }
   }
 
-  static async updateSubCategory(id, updateData, performedBy, details) {
-    try {
-      const updatedSubCategory = await Category.findOneAndUpdate(
-        { "subCategories._id": id },
-        { $set: { "subCategories.$": updateData } },
-        { new: true }
-      );
-      if (!updatedSubCategory) throw new Error("SubCategory not found");
+  async updateSubCategory(userId, catId, subCatId, updateData) {
+    const { name, image } = updateData;
 
-      await this.logUpdateToCatalog(
-        "UPDATE",
-        "SubCategory",
-        performedBy,
-        id,
-        details
-      );
-      return updatedSubCategory;
+    try {
+      const category = await Category.findById(catId);
+      if (!category) throw new Error("Parent category not found");
+
+      const subCategory = category.subCategories.id(subCatId);
+      if (!subCategory) throw new Error("Subcategory not found");
+
+      if (name) subCategory.name = name;
+      if (image) subCategory.image = image;
+
+      const updatedCategory = await category.save();
+
+      await Catalog.create({
+        action: "UPDATE",
+        modelAffected: "SubCategory",
+        performedBy: userId,
+        performedAt: subCategory._id,
+        details: `Updated subcategory to name: ${name || "unchanged"}`,
+      });
+
+      return subCategory;
     } catch (error) {
       throw new Error(`Failed to update SubCategory: ${error.message}`);
     }
   }
 
-  static async updateGrandCategory(id, updateData, performedBy, details) {
-    try {
-      const updatedGrandCategory = await Category.findOneAndUpdate(
-        { "subCategories.grandCategories._id": id },
-        { $set: { "subCategories.$.grandCategories.$": updateData } },
-        { new: true }
-      );
-      if (!updatedGrandCategory) throw new Error("GrandCategory not found");
+  async updateGrandCategory(userId, catId, subCatId, grandCatId, updateData) {
+    const { name, image } = updateData;
 
-      await this.logUpdateToCatalog(
-        "UPDATE",
-        "GrandCategory",
-        performedBy,
-        id,
-        details
-      );
-      return updatedGrandCategory;
+    try {
+      const category = await Category.findById(catId);
+      if (!category) throw new Error("Parent category not found");
+
+      const subCategory = category.subCategories.id(subCatId);
+      if (!subCategory) throw new Error("Subcategory not found");
+
+      const grandCategory = subCategory.grandCategories.id(grandCatId);
+      if (!grandCategory) throw new Error("Grand category not found");
+
+      if (name) grandCategory.name = name;
+      if (image) grandCategory.image = image;
+
+      const updatedCategory = await category.save();
+
+      await Catalog.create({
+        action: "UPDATE",
+        modelAffected: "GrandCategory",
+        performedBy: userId,
+        performedAt: grandCategory._id,
+        details: `Updated grand category to name: ${name || "unchanged"}`,
+      });
+
+      return grandCategory;
     } catch (error) {
       throw new Error(`Failed to update GrandCategory: ${error.message}`);
     }
