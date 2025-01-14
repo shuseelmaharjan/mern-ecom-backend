@@ -38,4 +38,26 @@ router.put(
   categoryController.updateRemoveGrandCategory
 );
 
+//update category details
+router.put(
+  "/v1/update/category/:id",
+  upload.single("image"),
+  processImage,
+  categoryController.updateCategory
+);
+
+router.put(
+  "/v1/update/subcategory/:catId/:id",
+  upload.single("image"),
+  processImage,
+  categoryController.updateSubCategory
+);
+
+router.put(
+  "/v1/update/grandcategory/:catId/subId/:id",
+  upload.single("image"),
+  processImage,
+  categoryController.updateGrandCategory
+);
+
 module.exports = router;

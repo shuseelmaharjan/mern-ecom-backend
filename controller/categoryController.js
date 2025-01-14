@@ -2,6 +2,7 @@ const categoryService = require("../services/categoryService");
 const RoleChecker = require("../helper/roleChecker");
 const GetUserId = require("../helper/getUserId");
 const deleteService = require("../services/removeCategoryService");
+const CategoryUpdateService = require("../services/categoryUpdateService");
 
 class CategoryController {
   async createCategory(req, res) {
@@ -17,54 +18,6 @@ class CategoryController {
       await categoryService.createCategory(req.body, id);
       res.status(201).json({
         message: "Category created successfully.",
-      });
-    } catch (error) {
-      res.status(400).json({ message: error.message });
-    }
-  }
-
-  async updateCategory(req, res) {
-    try {
-      const roleChecker = new RoleChecker(req);
-      const role = await roleChecker.getRole();
-      const userId = new GetUserId(req);
-      const id = await userId.getUserId();
-
-      if (role !== "mm") {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-
-      const category = await categoryService.updateCategory(
-        req.params.id,
-        req.body,
-        id
-      );
-
-      res.status(200).json({
-        message: "Category updated successfully.",
-        data: category,
-      });
-    } catch (error) {
-      res.status(400).json({ message: error.message });
-    }
-  }
-
-  async deleteCategory(req, res) {
-    try {
-      const roleChecker = new RoleChecker(req);
-      const role = await roleChecker.getRole();
-      const userId = new GetUserId(req);
-      const id = await userId.getUserId();
-
-      if (role !== "mm") {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-
-      const category = await categoryService.deleteCategory(req.params.id, id);
-
-      res.status(200).json({
-        message: "Category deleted successfully.",
-        data: category,
       });
     } catch (error) {
       res.status(400).json({ message: error.message });
@@ -233,6 +186,93 @@ class CategoryController {
       });
     } catch (error) {
       res.status(400).json({ message: error.message });
+    }
+  }
+
+  async updateCategory(req, res) {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+      const roleChecker = new RoleChecker(req);
+      const userIdHelper = new GetUserId(req);
+
+      const role = await roleChecker.getRole();
+      const userId = await userIdHelper.getUserId();
+
+      if (role !== "mm") {
+        return res
+          .status(403)
+          .json({ message: "Unauthorized: Insufficient permissions." });
+      }
+
+      const updatedCategory = await CategoryUpdateService.updateCategory(
+        userId,
+        id,
+        updateData
+      );
+
+      return res.status(200).json({
+        message: "Category updated successfully.",
+        updatedRecord: updatedCategory,
+      });
+    } catch (error) {
+      if (error.message.includes("not found")) {
+        return res.status(404).json({ message: error.message });
+      }
+      return res
+        .status(500)
+        .json({ message: "Internal Server Error", error: error.message });
+    }
+  }
+
+  async updateSubCategory(req, res) {
+    const { categoryId } = req.params;
+    const updateData = req.body;
+    const roleChecker = new RoleChecker(req);
+    const userIdHelper = new GetUserId(req);
+
+    const role = await roleChecker.getRole();
+    const userId = await userIdHelper.getUserId();
+
+    if (role !== "mm") {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const updatedSubCategory = await CategoryUpdateService.updateSubCategory(
+        id,
+        updateData,
+        performedBy,
+        details
+      );
+      return res.status(200).json({
+        message: "SubCategory updated successfully.",
+        updatedRecord: updatedSubCategory,
+      });
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  async updateGrandCategory(req, res) {
+    const { id } = req.params;
+    const updateData = req.body;
+    const { performedBy, details } = req.body;
+
+    try {
+      const updatedGrandCategory =
+        await CategoryUpdateService.updateGrandCategory(
+          id,
+          updateData,
+          performedBy,
+          details
+        );
+      return res.status(200).json({
+        message: "GrandCategory updated successfully.",
+        updatedRecord: updatedGrandCategory,
+      });
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
     }
   }
 }

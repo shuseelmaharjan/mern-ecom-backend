@@ -189,7 +189,7 @@ class CategoryService {
         );
 
         const subCategoriesWithActivities = category.subCategories
-          .filter((subCategory) => subCategory.isActive) // Filter out inactive subcategories
+          .filter((subCategory) => subCategory.isActive)
           .map((subCategory) => {
             const subCategoryActivity = enhancedActivities.find(
               (activity) =>
@@ -198,7 +198,7 @@ class CategoryService {
             );
 
             const grandCategoriesWithActivities = subCategory.grandCategories
-              .filter((grandCategory) => grandCategory.isActive) // Filter out inactive grand categories
+              .filter((grandCategory) => grandCategory.isActive)
               .map((grandCategory) => {
                 const grandCategoryActivity = enhancedActivities.find(
                   (activity) =>
