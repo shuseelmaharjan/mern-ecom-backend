@@ -188,16 +188,18 @@ class CategoryService {
             activity.performedAt.toString() === category._id.toString()
         );
 
-        const subCategoriesWithActivities = category.subCategories.map(
-          (subCategory) => {
+        const subCategoriesWithActivities = category.subCategories
+          .filter((subCategory) => subCategory.isActive) // Filter out inactive subcategories
+          .map((subCategory) => {
             const subCategoryActivity = enhancedActivities.find(
               (activity) =>
                 activity.modelAffected === "SubCategory" &&
                 activity.performedAt.toString() === subCategory._id.toString()
             );
 
-            const grandCategoriesWithActivities =
-              subCategory.grandCategories.map((grandCategory) => {
+            const grandCategoriesWithActivities = subCategory.grandCategories
+              .filter((grandCategory) => grandCategory.isActive) // Filter out inactive grand categories
+              .map((grandCategory) => {
                 const grandCategoryActivity = enhancedActivities.find(
                   (activity) =>
                     activity.modelAffected === "GrandCategory" &&
@@ -216,8 +218,7 @@ class CategoryService {
               activity: subCategoryActivity || null,
               grandCategories: grandCategoriesWithActivities,
             };
-          }
-        );
+          });
 
         return {
           ...category.toObject(),
