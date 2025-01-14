@@ -3,6 +3,7 @@ const RoleChecker = require("../helper/roleChecker");
 const GetUserId = require("../helper/getUserId");
 const deleteService = require("../services/removeCategoryService");
 const CategoryUpdateService = require("../services/categoryUpdateService");
+const jwt = require("jsonwebtoken");
 
 class CategoryController {
   async createCategory(req, res) {
@@ -235,6 +236,8 @@ class CategoryController {
       const role = await roleChecker.getRole();
       const userId = await userIdHelper.getUserId();
 
+      console.log(role);
+
       if (role !== "mm") {
         return res
           .status(403)
@@ -261,16 +264,28 @@ class CategoryController {
 
   async updateGrandCategory(req, res) {
     try {
-      const { catId, subId, id } = req.params;
+      const { catId, subId, id: grandCatId } = req.params;
       const updateData = req.body;
-      const userId = req.userId;
+      const roleChecker = new RoleChecker(req);
+      const userIdHelper = new GetUserId(req);
+
+      const role = await roleChecker.getRole();
+      const userId = await userIdHelper.getUserId();
+
+      console.log(role);
+
+      if (role !== "mm") {
+        return res
+          .status(403)
+          .json({ message: "Unauthorized: Insufficient permissions." });
+      }
 
       const updatedGrandCategory =
         await CategoryUpdateService.updateGrandCategory(
           userId,
           catId,
           subId,
-          id,
+          grandCatId,
           updateData
         );
 

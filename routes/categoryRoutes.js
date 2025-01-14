@@ -54,7 +54,7 @@ router.put(
 );
 
 router.put(
-  "/v1/update/grandcategory/:catId/subId/:id",
+  "/v1/update-grandcategory/:catId/:subId/:id",
   upload.single("image"),
   processImage,
   categoryController.updateGrandCategory
