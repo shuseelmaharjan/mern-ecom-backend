@@ -91,6 +91,39 @@ class CampaignController {
       console.error("Error updating campaign:", error);
     }
   }
+
+  async deleteCampaign(req, res) {
+    try {
+      const { id } = req.params;
+
+      const roleChecker = new RoleChecker(req);
+      const userIdHelper = new GetUserId(req);
+
+      const role = await roleChecker.getRole();
+      const performedBy = await userIdHelper.getUserId();
+      console.log(role);
+
+      if (role !== "mm") {
+        return res
+          .status(403)
+          .json({ message: "Unauthorized: Insufficient permissions." });
+      }
+
+      const deletedCampaign = await CampaignService.deleteCampaign(
+        id,
+        performedBy
+      );
+
+      res.status(200).json({
+        message: "Campaign deleted successfully",
+        deletedCampaign,
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: error.message || "Error deleting campaign",
+      });
+    }
+  }
 }
 
 module.exports = new CampaignController();

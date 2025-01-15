@@ -25,4 +25,6 @@ router.put(
   CampaignController.updateCampaign
 );
 
+router.delete("/v1/delete-campaign/:id", CampaignController.deleteCampaign);
+
 module.exports = router;

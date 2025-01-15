@@ -127,6 +127,29 @@ class CampaignService {
       throw new Error(`Error updating campaign: ${error.message}`);
     }
   }
+
+  async deleteCampaign(campaignId, performedBy) {
+    try {
+      const campaign = await Campaign.findByIdAndDelete(campaignId);
+
+      if (!campaign) {
+        throw new Error("Campaign not found");
+      }
+
+      const log = new CampaignLog({
+        action: "DELETE",
+        affectedObjectId: campaign._id,
+        performedBy,
+        details: `Campaign "${campaign.title}" deleted successfully.`,
+      });
+
+      await log.save();
+
+      return campaign;
+    } catch (error) {
+      throw new Error(`Error deleting campaign: ${error.message}`);
+    }
+  }
 }
 
 module.exports = new CampaignService();
