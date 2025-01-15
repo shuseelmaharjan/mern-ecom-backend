@@ -3,7 +3,6 @@ const RoleChecker = require("../helper/roleChecker");
 const GetUserId = require("../helper/getUserId");
 const deleteService = require("../services/removeCategoryService");
 const CategoryUpdateService = require("../services/categoryUpdateService");
-const jwt = require("jsonwebtoken");
 
 class CategoryController {
   async createCategory(req, res) {

@@ -26,6 +26,8 @@ app.use((req, res, next) => {
   next();
 });
 
+require("./services/campaignSchedular");
+
 // Routes
 const authRoute = require("./routes/authRoutes");
 const shippingRoute = require("./routes/shippingRoutes");
@@ -38,6 +40,7 @@ const chatRoute = require("./routes/chatRoutes");
 const userRoute = require("./routes/userRoutes");
 const employeeRoutes = require("./routes/employeeRoutes");
 const shipingRoutes = require("./routes/shippingRoute");
+const campignRoutes = require("./routes/campaignRoutes");
 
 app.use("/api", authRoute);
 app.use("/api", shippingRoute);
@@ -50,6 +53,7 @@ app.use("/api/v1", chatRoute);
 app.use("/api/", userRoute);
 app.use("/api/", employeeRoutes);
 app.use("/api/", shipingRoutes);
+app.use("/api/", campignRoutes);
 
 // Socket.IO Setup
 const server = http.createServer(app);
@@ -78,6 +82,18 @@ app.use(
   express.static(path.join(__dirname, "media/uploads"))
 );
 app.use("/media/video", express.static(path.join(__dirname, "media/video")));
+app.use("/banner", express.static(path.join(__dirname, "banner")));
+
+app.get("/banner/:date/:imageName", (req, res) => {
+  const { date, imageName } = req.params;
+  const imagePath = path.join(__dirname, "banner", date, imageName);
+
+  if (fs.existsSync(imagePath)) {
+    res.sendFile(imagePath);
+  } else {
+    res.status(404).send("Image not found");
+  }
+});
 
 // CSRF Protection
 app.use(csrfProtection);

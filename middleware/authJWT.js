@@ -54,6 +54,12 @@ class TokenValidator {
     }
     return true;
   }
+  isMarketing() {
+    if (this.user.role !== "mm") {
+      throw new Error("THe user is not a Marketing Manager");
+    }
+    return true;
+  }
 }
 
 // Helper function to extract token from headers
@@ -120,6 +126,7 @@ const verifyUser = verifyRole(TokenValidator.prototype.isUser);
 const verifyVendor = verifyRole(TokenValidator.prototype.isVendor);
 const verifyStaff = verifyRole(TokenValidator.prototype.isStaff);
 const verifyHr = verifyRole(TokenValidator.prototype.isHr);
+const verifyMarketing = verifyRole(TokenValidator.prototype.isMarketing);
 
 // Middleware to verify multiple roles
 const verifyRoles = (...allowedRoles) => {
@@ -164,4 +171,5 @@ module.exports = {
   verifyStaff,
   verifyHr,
   verifyRoles,
+  verifyMarketing,
 };
