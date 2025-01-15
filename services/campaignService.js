@@ -57,14 +57,30 @@ class CampaignService {
 
   async getUpcomingCampaigns() {
     const currentDateTime = new Date();
-    console.log("Current Date and Time:", currentDateTime);
 
     const campaigns = await Campaign.find({
       startTime: { $gte: currentDateTime },
     });
-    console.log("Query Results:", campaigns);
 
     return campaigns;
+  }
+
+  async getInactiveExpiredCampaigns() {
+    try {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const currentDate = new Date();
+
+      const campaigns = await Campaign.find({
+        isActive: false,
+        expiryTime: { $lte: currentDate, $gte: thirtyDaysAgo },
+      });
+
+      return campaigns;
+    } catch (error) {
+      throw new Error("Error fetching campaigns: " + error.message);
+    }
   }
 }
 

@@ -13,5 +13,9 @@ router.post(
 );
 router.get("/v1/campaigns/active", CampaignController.getActiveCampaigns);
 router.get("/v1/campaigns/upcoming", CampaignController.getUpcomingCampaigns);
+router.get(
+  "/v1/campaigns/expired",
+  CampaignController.getInactiveExpiredCampaigns
+);
 
 module.exports = router;

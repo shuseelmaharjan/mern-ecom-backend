@@ -47,6 +47,15 @@ class CampaignController {
       res.status(500).json({ success: false, message: error.message });
     }
   }
+
+  async getInactiveExpiredCampaigns(req, res) {
+    try {
+      const campaigns = await CampaignService.getInactiveExpiredCampaigns();
+      res.status(200).json({ success: true, data: campaigns });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
 }
 
 module.exports = new CampaignController();
