@@ -56,6 +56,41 @@ class CampaignController {
       res.status(500).json({ success: false, message: error.message });
     }
   }
+
+  async updateCampaign(req, res) {
+    try {
+      console.log("Request Body:", req.body);
+
+      const roleChecker = new RoleChecker(req);
+      const userIdHelper = new GetUserId(req);
+
+      const role = await roleChecker.getRole();
+      const performedBy = await userIdHelper.getUserId();
+
+      if (role !== "mm") {
+        return res
+          .status(403)
+          .json({ message: "Unauthorized: Insufficient permissions." });
+      }
+
+      const { campaignId } = req.params;
+      const updateData = req.body;
+
+      const updatedCampaign = await CampaignService.updateCampaign(
+        campaignId,
+        updateData,
+        performedBy
+      );
+
+      res.status(200).json({
+        message: "Campaign updated successfully!",
+        data: updatedCampaign,
+      });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+      console.error("Error updating campaign:", error);
+    }
+  }
 }
 
 module.exports = new CampaignController();

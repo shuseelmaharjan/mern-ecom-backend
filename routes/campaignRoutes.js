@@ -18,4 +18,11 @@ router.get(
   CampaignController.getInactiveExpiredCampaigns
 );
 
+router.put(
+  "/v1/update-campaign/:campaignId",
+  upload.single("image"),
+  processImage,
+  CampaignController.updateCampaign
+);
+
 module.exports = router;

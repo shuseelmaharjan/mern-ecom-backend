@@ -82,6 +82,51 @@ class CampaignService {
       throw new Error("Error fetching campaigns: " + error.message);
     }
   }
+
+  async updateCampaign(campaignId, updateData, performedBy) {
+    try {
+      const allowedFields = [
+        "title",
+        "description",
+        "saleType",
+        "startTime",
+        "expiryTime",
+        "discountPercentage",
+        "priority",
+        "showOnHeader",
+      ];
+
+      const filteredData = {};
+      for (const key in updateData) {
+        if (allowedFields.includes(key)) {
+          filteredData[key] = updateData[key];
+        }
+      }
+
+      const updatedCampaign = await Campaign.findByIdAndUpdate(
+        campaignId,
+        filteredData,
+        { new: true, runValidators: true }
+      );
+
+      if (!updatedCampaign) {
+        throw new Error("Campaign not found");
+      }
+
+      const log = new CampaignLog({
+        action: "UPDATE",
+        affectedObjectId: campaignId,
+        performedBy,
+        details: `Campaign "${updatedCampaign.title}" updated successfully.`,
+      });
+
+      await log.save();
+
+      return updatedCampaign;
+    } catch (error) {
+      throw new Error(`Error updating campaign: ${error.message}`);
+    }
+  }
 }
 
 module.exports = new CampaignService();
