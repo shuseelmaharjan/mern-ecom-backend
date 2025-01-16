@@ -69,4 +69,8 @@ router.put(
   categoryController.updateGrandCategory
 );
 
+router.get("/cat-suggestions", (req, res) =>
+  categoryController.suggestCategories(req, res)
+);
+
 module.exports = router;

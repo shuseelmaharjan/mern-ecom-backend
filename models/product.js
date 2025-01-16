@@ -22,6 +22,7 @@ const dimensionSchema = new mongoose.Schema({
     default: null,
   },
 });
+
 const colorSchema = new mongoose.Schema({
   isEnabled: { type: Boolean, required: true, default: false },
   details: [
@@ -77,7 +78,6 @@ const ProductSchema = new mongoose.Schema({
       default: null,
     },
   },
-
   renewal: { type: Boolean, default: false },
   expDate: { type: Date },
   active: { type: Boolean, default: true },
@@ -86,6 +86,18 @@ const ProductSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
+  },
+  views: { type: Number, default: 0 },
+
+  category: {
+    type: mongoose.Schema.Types.ObjectId,
+    refPath: "Category",
+    required: true,
+  },
+  categoryModel: {
+    type: String,
+    required: true,
+    enum: ["Category", "SubCategory", "GrandCategory"],
   },
 });
 

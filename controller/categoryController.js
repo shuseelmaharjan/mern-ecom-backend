@@ -298,6 +298,19 @@ class CategoryController {
       });
     }
   }
+
+  //suggestion
+  async suggestCategories(req, res) {
+    try {
+      const { keyword } = req.query;
+
+      const suggestions = await categoryService.getSuggestions(keyword);
+
+      return res.status(200).json({ suggestions });
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
+  }
 }
 
 module.exports = new CategoryController();

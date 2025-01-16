@@ -234,6 +234,63 @@ class CategoryService {
       );
     }
   }
+
+  async getSuggestions(keyword) {
+    if (!keyword || keyword.trim() === "") {
+      throw new Error("Keyword is required.");
+    }
+
+    // Find categories where any level matches the keyword
+    const categories = await Category.find({
+      $or: [
+        { name: { $regex: keyword, $options: "i" } },
+        { "subCategories.name": { $regex: keyword, $options: "i" } },
+        {
+          "subCategories.grandCategories.name": {
+            $regex: keyword,
+            $options: "i",
+          },
+        },
+      ],
+    });
+
+    // Build the suggestion list
+    const suggestions = categories.map((category) => {
+      const matchedSubCategories = category.subCategories
+        .filter(
+          (sub) =>
+            sub.name.toLowerCase().includes(keyword.toLowerCase()) ||
+            sub.grandCategories.some((grand) =>
+              grand.name.toLowerCase().includes(keyword.toLowerCase())
+            )
+        )
+        .map((sub) => ({
+          id: sub._id,
+          name: sub.name,
+          grandCategories: sub.grandCategories
+            .filter((grand) =>
+              grand.name.toLowerCase().includes(keyword.toLowerCase())
+            )
+            .map((grand) => ({
+              id: grand._id,
+              name: grand.name,
+            })),
+        }));
+
+      return {
+        parentCategory: {
+          id: category._id,
+          name: category.name,
+        },
+        subCategories: matchedSubCategories,
+      };
+    });
+
+    return suggestions.filter(
+      (suggestion) =>
+        suggestion.subCategories.length > 0 || suggestion.parentCategory
+    );
+  }
 }
 
 module.exports = new CategoryService();
