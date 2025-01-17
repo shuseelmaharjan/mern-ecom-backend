@@ -2,9 +2,7 @@ const Product = require("../models/product");
 
 class ProductService {
   async createProduct(productData) {
-    const { files, createdBy } = productData;
-    console.log(productData);
-
+    const { files, createdBy, category, categoryModel } = productData; // Include `category` and `categoryModel`
     let media = { images: [] };
 
     for (let i = 1; i <= 8; i++) {
@@ -72,6 +70,7 @@ class ProductService {
     const product = new Product({
       ...productData,
       createdBy,
+      category, // Explicitly set `category`
       thumbnail: files?.thumbnail ? files.thumbnail[0].path : undefined,
       video: files?.video ? files.video[0].path : undefined,
       dimension: productData.dimension
