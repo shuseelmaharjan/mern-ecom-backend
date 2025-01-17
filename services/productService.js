@@ -1,8 +1,69 @@
 const Product = require("../models/product");
+const { Category } = require("../models/categories");
+const mongoose = require("mongoose");
 
 class ProductService {
-  async createProduct(productData) {
-    const { files, createdBy, category, categoryModel } = productData; // Include `category` and `categoryModel`
+  async getCategoryType(categoryId) {
+    console.log("Requested Category ID:", categoryId);
+
+    if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+      throw new Error("Invalid category ID format.");
+    }
+
+    const categoryObjectId = new mongoose.Types.ObjectId(categoryId);
+
+    const category = await Category.findOne({ _id: categoryObjectId }).exec();
+    if (category) {
+      return { type: "Category", category };
+    }
+
+    const subCategory = await Category.aggregate([
+      { $unwind: "$subCategories" },
+      { $match: { "subCategories._id": categoryObjectId } },
+      {
+        $project: {
+          _id: 0,
+          category: "$name",
+          subCategory: "$subCategories.name",
+        },
+      },
+    ]);
+    if (subCategory.length > 0) {
+      return { type: "SubCategory", subCategory: subCategory[0] };
+    }
+
+    const grandCategory = await Category.aggregate([
+      { $unwind: "$subCategories" },
+      { $unwind: "$subCategories.grandCategories" },
+      { $match: { "subCategories.grandCategories._id": categoryObjectId } },
+      {
+        $project: {
+          _id: 0,
+          grandCategory: "$subCategories.grandCategories.name",
+        },
+      },
+    ]);
+    if (grandCategory.length > 0) {
+      return { type: "GrandCategory", grandCategory: grandCategory[0] };
+    }
+
+    return null;
+  }
+
+  async createProduct(productData, userId) {
+    const { files, category } = productData;
+
+    const categoryType = await this.getCategoryType(category);
+
+    if (!categoryType) {
+      throw new Error(
+        "Invalid category ID. It must be a valid Category, SubCategory, or GrandCategory."
+      );
+    }
+
+    console.log("Category Type:", categoryType.type);
+    console.log("Category Data:", categoryType);
+
     let media = { images: [] };
 
     for (let i = 1; i <= 8; i++) {
@@ -69,8 +130,9 @@ class ProductService {
 
     const product = new Product({
       ...productData,
-      createdBy,
-      category, // Explicitly set `category`
+      createdBy: userId,
+      category,
+      categoryModel: categoryType.type,
       thumbnail: files?.thumbnail ? files.thumbnail[0].path : undefined,
       video: files?.video ? files.video[0].path : undefined,
       dimension: productData.dimension
@@ -127,8 +189,40 @@ class ProductService {
 
   async getVendorProduct(userID) {
     try {
-      const products = await Product.find({ createdBy: userID });
-      return products;
+      const products = await Product.find({ createdBy: userID, active: true })
+        .select(
+          "title media description price quantity productLimit tags materials renewal expDate views createdAt"
+        )
+        .populate("media.images", "url default")
+        .exec();
+
+      const totalCount = await Product.countDocuments({
+        createdBy: userID,
+        active: true,
+      });
+
+      return { products, totalCount };
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      throw new Error("Failed to fetch products from the database");
+    }
+  }
+
+  async getInactiveVendorProduct(userID) {
+    try {
+      const products = await Product.find({ createdBy: userID, active: false })
+        .select(
+          "title media description price quantity productLimit tags materials renewal expDate views createdAt"
+        )
+        .populate("media.images", "url default")
+        .exec();
+
+      const totalCount = await Product.countDocuments({
+        createdBy: userID,
+        active: false,
+      });
+
+      return { products, totalCount };
     } catch (error) {
       console.error("Error fetching products:", error);
       throw new Error("Failed to fetch products from the database");
@@ -136,4 +230,4 @@ class ProductService {
   }
 }
 
-module.exports = ProductService;
+module.exports = new ProductService();

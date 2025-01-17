@@ -94,6 +94,11 @@ const ProductSchema = new mongoose.Schema({
     refPath: "Category",
     required: true,
   },
+  categoryModel: {
+    type: String,
+    required: true,
+    enum: ["Category", "SubCategory", "GrandCategory"],
+  },
 });
 
 module.exports = mongoose.model("Product", ProductSchema);

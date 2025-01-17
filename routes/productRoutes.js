@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const productController = require("../controller/productController");
-const { verifyVendor, verifyAccessToken } = require("./../middleware/authJWT");
+const { verifyAccessToken } = require("./../middleware/authJWT");
 const uploadFiles = require("../middleware/product");
 
 router.post(
@@ -15,6 +15,12 @@ router.get(
   "/v1/vendor-product",
   verifyAccessToken,
   productController.getVendoProduct
+);
+
+router.get(
+  "/v1/inactive-vendor-product",
+  verifyAccessToken,
+  productController.getInactiveVendoProduct
 );
 
 module.exports = router;
