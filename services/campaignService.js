@@ -1,5 +1,5 @@
 const { Campaign, CampaignLog } = require("../models/campaign");
-const moment = require("moment");
+const Engagement = require("../models/engagement");
 
 class CampaignService {
   async createCampaign(data, performedBy) {
@@ -52,7 +52,34 @@ class CampaignService {
   }
 
   async getCampaignsByActiveStatus(isActive) {
-    return await Campaign.find({ isActive });
+    try {
+      const campaigns = await Campaign.find({ isActive });
+
+      const engagementCounts = await Engagement.aggregate([
+        { $match: { campaignId: { $in: campaigns.map((c) => c._id) } } },
+        {
+          $group: {
+            _id: "$campaignId",
+            totalEngagements: { $sum: 1 },
+          },
+        },
+      ]);
+
+      const campaignsWithEngagements = campaigns.map((campaign) => {
+        const engagement = engagementCounts.find((e) =>
+          e._id.equals(campaign._id)
+        );
+        return {
+          ...campaign.toObject(),
+          totalEngagements: engagement ? engagement.totalEngagements : 0,
+        };
+      });
+
+      return campaignsWithEngagements;
+    } catch (error) {
+      console.error("Error fetching campaigns with engagement counts:", error);
+      throw error;
+    }
   }
 
   async getUpcomingCampaigns() {
@@ -62,7 +89,27 @@ class CampaignService {
       startTime: { $gte: currentDateTime },
     });
 
-    return campaigns;
+    const engagementCounts = await Engagement.aggregate([
+      { $match: { campaignId: { $in: campaigns.map((c) => c._id) } } },
+      {
+        $group: {
+          _id: "$campaignId",
+          totalEngagements: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const campaignsWithEngagements = campaigns.map((campaign) => {
+      const engagement = engagementCounts.find((e) =>
+        e._id.equals(campaign._id)
+      );
+      return {
+        ...campaign.toObject(),
+        totalEngagements: engagement ? engagement.totalEngagements : 0,
+      };
+    });
+
+    return campaignsWithEngagements;
   }
 
   async getInactiveExpiredCampaigns() {
@@ -77,7 +124,27 @@ class CampaignService {
         expiryTime: { $lte: currentDate, $gte: thirtyDaysAgo },
       });
 
-      return campaigns;
+      const engagementCounts = await Engagement.aggregate([
+        { $match: { campaignId: { $in: campaigns.map((c) => c._id) } } },
+        {
+          $group: {
+            _id: "$campaignId",
+            totalEngagements: { $sum: 1 },
+          },
+        },
+      ]);
+
+      const campaignsWithEngagements = campaigns.map((campaign) => {
+        const engagement = engagementCounts.find((e) =>
+          e._id.equals(campaign._id)
+        );
+        return {
+          ...campaign.toObject(),
+          totalEngagements: engagement ? engagement.totalEngagements : 0,
+        };
+      });
+
+      return campaignsWithEngagements;
     } catch (error) {
       throw new Error("Error fetching campaigns: " + error.message);
     }
