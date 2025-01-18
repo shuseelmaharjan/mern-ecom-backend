@@ -42,6 +42,7 @@ const employeeRoutes = require("./routes/employeeRoutes");
 const shipingRoutes = require("./routes/shippingRoute");
 const campignRoutes = require("./routes/campaignRoutes");
 const engagementRoutes = require("./routes/engagementRoutes");
+const algorithmRoutes = require("./routes/algorithmRoutes");
 
 app.use("/api", authRoute);
 app.use("/api", shippingRoute);
@@ -51,11 +52,12 @@ app.use("/api", productRoute);
 app.use("/api", shopRoutes);
 app.use("/api/v1", siteRoutes);
 app.use("/api/v1", chatRoute);
-app.use("/api/", userRoute);
-app.use("/api/", employeeRoutes);
-app.use("/api/", shipingRoutes);
-app.use("/api/", campignRoutes);
-app.use("/api/", engagementRoutes);
+app.use("/api", userRoute);
+app.use("/api", employeeRoutes);
+app.use("/api", shipingRoutes);
+app.use("/api", campignRoutes);
+app.use("/api", engagementRoutes);
+app.use("/api", algorithmRoutes);
 
 // Socket.IO Setup
 const server = http.createServer(app);
