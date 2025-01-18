@@ -311,6 +311,44 @@ class CategoryController {
       return res.status(400).json({ error: err.message });
     }
   }
+
+  async getClientCategories(req, res) {
+    try {
+      const categories = await categoryService.getClientCategories();
+      res.status(200).json(categories);
+    } catch (error) {
+      console.error("Error in getCategories:", error.message);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async getClientSubCategories(req, res) {
+    const { categoryId } = req.params;
+    try {
+      const subCategories = await categoryService.getClientSubCategories(
+        categoryId
+      );
+      res.status(200).json(subCategories);
+    } catch (error) {
+      console.error("Error in getSubCategories:", error.message);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async getClientGrandCategories(req, res) {
+    const { categoryId, subCategoryId } = req.params;
+    try {
+      const grandCategories =
+        await categoryService.getClientActiveGrandCategories(
+          categoryId,
+          subCategoryId
+        );
+      res.status(200).json(grandCategories);
+    } catch (error) {
+      console.error("Error in getGrandCategories:", error.message);
+      res.status(500).json({ error: error.message });
+    }
+  }
 }
 
 module.exports = new CategoryController();

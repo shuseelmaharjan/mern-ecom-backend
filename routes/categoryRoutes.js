@@ -69,8 +69,17 @@ router.put(
   categoryController.updateGrandCategory
 );
 
-router.get("/cat-suggestions", (req, res) =>
-  categoryController.suggestCategories(req, res)
+router.get("/cat-suggestions", categoryController.suggestCategories);
+
+//client sides apis
+router.get("/v1/client-categories", categoryController.getClientCategories);
+router.get(
+  "/v1/client-subcategories/:categoryId",
+  categoryController.getClientSubCategories
+);
+router.get(
+  "/v1/client-grandcategories/:categoryId/:subCategoryId",
+  categoryController.getClientGrandCategories
 );
 
 module.exports = router;

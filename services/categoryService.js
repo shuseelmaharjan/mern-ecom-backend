@@ -291,6 +291,44 @@ class CategoryService {
         suggestion.subCategories.length > 0 || suggestion.parentCategory
     );
   }
+
+  async getClientCategories() {
+    try {
+      return await Category.find({ isActive: true }).select("-subCategories");
+    } catch (error) {
+      throw new Error("Error fetching active categories: " + error.message);
+    }
+  }
+
+  async getClientSubCategories(categoryId) {
+    try {
+      const category = await Category.findById(categoryId);
+      if (!category) {
+        throw new Error("Category not found");
+      }
+      return category.subCategories;
+    } catch (error) {
+      throw new Error("Error fetching subcategories: " + error.message);
+    }
+  }
+
+  async getClientActiveGrandCategories(categoryId, subCategoryId) {
+    try {
+      const category = await Category.findById(categoryId);
+      if (!category) {
+        throw new Error("Category not found");
+      }
+      const subCategory = category.subCategories.find(
+        (sub) => sub._id.toString() === subCategoryId
+      );
+      if (!subCategory) {
+        throw new Error("SubCategory not found");
+      }
+      return subCategory.grandCategories.filter((grand) => grand.isActive);
+    } catch (error) {
+      throw new Error("Error fetching grandcategories: " + error.message);
+    }
+  }
 }
 
 module.exports = new CategoryService();

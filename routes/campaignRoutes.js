@@ -31,4 +31,8 @@ router.get(
   CampaignController.getCampaignBySaleType
 );
 
+//user portal
+router.get("/v1/banner-campaigns", CampaignController.getBannerForHomepage);
+router.get("/v1/header-campaigns", CampaignController.getHeaderCampaign);
+
 module.exports = router;

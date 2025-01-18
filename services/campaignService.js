@@ -230,6 +230,30 @@ class CampaignService {
       saleType: saleType.toUpperCase(),
     });
   }
+  async getBannerForHomepage() {
+    try {
+      const campaigns = await Campaign.find({
+        priority: "BANNER",
+        isHeader: false,
+        isActive: true,
+      }).select("title description image discountPercentage");
+      return campaigns;
+    } catch (error) {
+      throw new Error("Error fetching campaigns: " + error.message);
+    }
+  }
+
+  async getHeaderCampaign() {
+    try {
+      const campaigns = await Campaign.find({
+        isHeader: true,
+        isActive: true,
+      }).select("title description image discountPercentage");
+      return campaigns;
+    } catch (error) {
+      throw new Error("Error fetching campaigns: " + error.message);
+    }
+  }
 }
 
 module.exports = new CampaignService();

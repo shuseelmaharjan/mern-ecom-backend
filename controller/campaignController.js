@@ -135,6 +135,40 @@ class CampaignController {
       res.status(400).json({ error: error.message });
     }
   }
+
+  async getBannerForHomepage(req, res) {
+    try {
+      const campaigns = await CampaignService.getBannerForHomepage();
+      res.status(200).json({
+        success: true,
+        message: "Banner campaigns fetched successfully",
+        data: campaigns,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: "Error fetching banner campaigns",
+        error: error.message,
+      });
+    }
+  }
+
+  async getHeaderCampaign(req, res) {
+    try {
+      const campaigns = await CampaignService.getHeaderCampaign();
+      res.status(200).json({
+        success: true,
+        message: "Banner campaigns fetched successfully",
+        data: campaigns,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: "Error fetching banner campaigns",
+        error: error.message,
+      });
+    }
+  }
 }
 
 module.exports = new CampaignController();
