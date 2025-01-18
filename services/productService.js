@@ -228,6 +228,20 @@ class ProductService {
       throw new Error("Failed to fetch products from the database");
     }
   }
+
+  async getProductById(productId) {
+    const product = await Product.findByIdAndUpdate(
+      productId,
+      { $inc: { views: 1 } },
+      { new: true }
+    );
+
+    if (!product) {
+      throw new Error("Product not found");
+    }
+
+    return product;
+  }
 }
 
 module.exports = new ProductService();

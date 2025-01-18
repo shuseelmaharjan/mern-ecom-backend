@@ -23,4 +23,6 @@ router.get(
   productController.getInactiveVendoProduct
 );
 
+router.get("/v1/product/:productId", productController.getProductDetails);
+
 module.exports = router;

@@ -78,6 +78,24 @@ class ProductController {
       });
     }
   }
+
+  async getProductDetails(req, res) {
+    const { productId } = req.params;
+
+    try {
+      const product = await productService.getProductById(productId);
+      res.status(200).json({
+        success: true,
+        message: "Product details fetched successfully",
+        data: product,
+      });
+    } catch (error) {
+      res.status(404).json({
+        success: false,
+        message: error.message || "Unable to fetch product details",
+      });
+    }
+  }
 }
 
 module.exports = new ProductController();
