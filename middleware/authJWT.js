@@ -9,7 +9,6 @@ class TokenValidator {
   verifyToken() {
     try {
       const decoded = jwt.verify(this.token, process.env.ACCESS_TOKEN_SECRET);
-
       if (!decoded.UserInfo || !decoded.UserInfo.role) {
         throw new Error("Invalid token payload");
       }
@@ -86,7 +85,6 @@ const verifyAccessToken = (req, res, next) => {
 
   try {
     tokenValidator.verifyToken();
-    // console.log("User Info from Token:", tokenValidator.user);
     req.user = tokenValidator.user;
     next();
   } catch (err) {
@@ -110,7 +108,6 @@ const verifyRole = (roleCheckFunction) => {
     try {
       tokenValidator.verifyToken();
       roleCheckFunction.call(tokenValidator);
-      // console.log("Role verified for user:", tokenValidator.user.role);
       req.user = tokenValidator.user;
       next();
     } catch (err) {

@@ -124,6 +124,17 @@ class CampaignController {
       });
     }
   }
+
+  async getCampaignBySaleType(req, res) {
+    const { saleType } = req.params;
+    try {
+      const campaigns = await CampaignService.getSpecificSaleDetails(saleType);
+      res.status(200).json(campaigns);
+    } catch (error) {
+      console.error("Error fetching campaigns", error.message);
+      res.status(400).json({ error: error.message });
+    }
+  }
 }
 
 module.exports = new CampaignController();

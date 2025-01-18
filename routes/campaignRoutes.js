@@ -26,5 +26,9 @@ router.put(
 );
 
 router.delete("/v1/delete-campaign/:id", CampaignController.deleteCampaign);
+router.get(
+  "/v1/launched-campaigns/:saleType",
+  CampaignController.getCampaignBySaleType
+);
 
 module.exports = router;

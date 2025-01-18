@@ -150,6 +150,19 @@ class CampaignService {
       throw new Error(`Error deleting campaign: ${error.message}`);
     }
   }
+
+  async getSpecificSaleDetails(saleType) {
+    const validSaleTypes = ["SALE", "QUICKSALE", "FESTIVAL", "FREESHIPPING"];
+
+    if (!validSaleTypes.includes(saleType.toUpperCase())) {
+      throw new Error("Invalid saleType");
+    }
+
+    return await Campaign.find({
+      isActive: true,
+      saleType: saleType.toUpperCase(),
+    });
+  }
 }
 
 module.exports = new CampaignService();
