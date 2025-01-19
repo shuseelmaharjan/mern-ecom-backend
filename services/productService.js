@@ -245,11 +245,11 @@ class ProductService {
       details: null,
     };
 
-    if (validEngagement) {
-      await this.incrementCampaignViews(validEngagement.campaignId);
+    if (validEngagement.status) {
+      await this.incrementCampaignViews(validEngagement.engagement.campaignId);
 
       const campaignDetails = await this.getCampaignDetails(
-        validEngagement.campaignId
+        validEngagement.engagement.campaignId
       );
 
       if (campaignDetails) {
@@ -336,7 +336,11 @@ class ProductService {
       expiryTime: { $gt: currentTime },
     }).lean();
 
-    return engagement;
+    if (!engagement || engagement.expiryTime <= currentTime) {
+      return { engagement: null, status: false };
+    }
+
+    return { engagement, status: true };
   }
 
   async getCampaignDetails(campaignId) {
