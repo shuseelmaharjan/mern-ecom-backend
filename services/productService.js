@@ -433,6 +433,8 @@ class ProductService {
         campaignDetails,
         campaignStatus,
         freeShipping,
+        shipping: product.shipping,
+        shipping: product.internationalShipping,
       };
     });
 

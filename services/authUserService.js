@@ -382,6 +382,23 @@ class AuthService {
 
     return "Password updated successfully.";
   }
+
+  async getDefaultShippingAddress(userId) {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const defaultShippingAddress = user.shippingAddresses.find(
+      (address) => address.isDefault
+    );
+
+    if (!defaultShippingAddress) {
+      throw new Error("Default shipping address not found");
+    }
+
+    return defaultShippingAddress;
+  }
 }
 
 module.exports = new AuthService();

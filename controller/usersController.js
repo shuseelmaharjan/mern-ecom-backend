@@ -1,5 +1,6 @@
 const userService = require("../services/authUserService");
 const RoleChecker = require("../helper/roleChecker");
+const GetUserId = require("../helper/getUserId");
 
 class UserController {
   async createEmployee(req, res) {
@@ -339,6 +340,27 @@ class UserController {
     } catch (error) {
       console.error("Error in changePassword:", error);
       return res.status(400).json({ message: error.message });
+    }
+  }
+
+  async getDefaultShippingAddress(req, res) {
+    try {
+      const userId = new GetUserId(req);
+      const id = await userId.getUserId();
+      const defaultShippingAddress =
+        await userService.getDefaultShippingAddress(id);
+      res.status(200).json(defaultShippingAddress);
+    } catch (error) {
+      if (error.message === "User not found") {
+        res.status(404).json({ message: error.message });
+      } else if (error.message === "Default shipping address not found") {
+        res.status(404).json({ message: error.message });
+      } else {
+        console.error("Error in UserController:", error);
+        res.status(500).json({
+          message: "An error occurred while processing your request.",
+        });
+      }
     }
   }
 }

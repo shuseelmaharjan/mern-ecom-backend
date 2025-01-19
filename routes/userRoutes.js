@@ -60,4 +60,10 @@ router.get(
 router.post("/v1/staff", verifyAccessToken, userController.addStaff);
 router.get("/v1/staff", verifyAccessToken, userController.getStaffs);
 
+router.get(
+  "/v1/get-my-default-address",
+  verifyAccessToken,
+  userController.getDefaultShippingAddress
+);
+
 module.exports = router;
