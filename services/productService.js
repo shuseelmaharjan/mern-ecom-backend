@@ -1,6 +1,9 @@
 const Product = require("../models/product");
 const { Category } = require("../models/categories");
 const mongoose = require("mongoose");
+const Engagement = require("../models/engagement");
+const Shop = require("../models/shop");
+const { Campaign } = require("../models/campaign");
 
 class ProductService {
   async getCategoryType(categoryId) {
@@ -229,18 +232,212 @@ class ProductService {
     }
   }
 
-  async getProductById(productId) {
-    const product = await Product.findByIdAndUpdate(
+  async getProductDetails(productId) {
+    const product = await this.incrementProductViews(productId);
+    if (!product) throw new Error("Product not found");
+
+    if (!product.active) throw new Error("Product is inactive");
+
+    const validEngagement = await this.getValidEngagement(productId);
+
+    let campaignResponse = {
+      status: false,
+      details: null,
+    };
+
+    if (validEngagement) {
+      await this.incrementCampaignViews(validEngagement.campaignId);
+
+      const campaignDetails = await this.getCampaignDetails(
+        validEngagement.campaignId
+      );
+
+      if (campaignDetails) {
+        campaignResponse = {
+          status: true,
+          details: {
+            saleType: campaignDetails.saleType,
+            title: campaignDetails.title,
+            description: campaignDetails.description,
+            startTime: campaignDetails.startTime,
+            expiryTime: campaignDetails.expiryTime,
+            image: campaignDetails.image,
+            isActive: campaignDetails.isActive,
+            discountPercentage: campaignDetails.discountPercentage,
+            createdAt: campaignDetails.createdAt,
+          },
+        };
+      }
+    }
+
+    const shop = await this.getShopDetails(product.createdBy);
+
+    return {
+      product: {
+        title: product.title,
+        media: product.media,
+        video: product.video,
+        description: product.description,
+        price: product.price,
+        quantity: product.quantity,
+        productLimit: product.productLimit,
+        brand: product.brand,
+        weight: product.weight,
+        dimension: product.dimension,
+        sku: product.sku,
+        colors: product.colors,
+        size: product.size,
+        tags: product.tags,
+        materials: product.materials,
+        shipping: product.shipping,
+        internationalShipping: product.internationalShipping,
+        returnAndExchange: product.returnAndExchange,
+        createdAt: product.createdAt,
+        isActive: product.isActive,
+      },
+      shop: {
+        shopName: shop.shopName,
+        ownerName: shop.ownerName,
+        shopLogo: shop.shopLogo,
+        shopDescription: shop.shopDescription,
+        createdDate: shop.createdDate,
+      },
+      campaign: campaignResponse,
+      engagement: validEngagement || null,
+    };
+  }
+
+  async incrementProductViews(productId) {
+    return await Product.findByIdAndUpdate(
       productId,
       { $inc: { views: 1 } },
       { new: true }
-    );
+    ).lean();
+  }
 
-    if (!product) {
-      throw new Error("Product not found");
+  async incrementCampaignViews(campaignId) {
+    return await Campaign.findByIdAndUpdate(
+      campaignId,
+      { $inc: { totalVisits: 1 } },
+      { new: true }
+    ).lean();
+  }
+
+  async getShopDetails(userId) {
+    const shop = await Shop.findOne({ userId }).lean();
+    if (!shop) throw new Error("Shop not found for the product owner");
+    return shop;
+  }
+
+  async getValidEngagement(productId) {
+    const currentTime = new Date();
+    const engagement = await Engagement.findOne({
+      productId,
+      expiryTime: { $gt: currentTime },
+    }).lean();
+
+    return engagement;
+  }
+
+  async getCampaignDetails(campaignId) {
+    const campaign = await Campaign.findById(campaignId).lean();
+
+    return campaign;
+  }
+
+  async getCategoryHierarchy(productId) {
+    try {
+      const product = await Product.findById(productId)
+        .populate("category")
+        .lean();
+
+      if (!product) {
+        throw new Error("Product not found");
+      }
+
+      const { categoryModel, category } = product;
+
+      const response = {
+        productId: product._id,
+        categoryModel,
+        details: {},
+      };
+
+      if (categoryModel === "Category") {
+        response.details = {
+          categoryId: category._id,
+          categoryName: category.name,
+        };
+      } else if (categoryModel === "SubCategory") {
+        const parentCategory = await Category.findOne({
+          "subCategories._id": category._id,
+        }).lean();
+
+        if (!parentCategory) {
+          throw new Error("Parent category for subcategory not found");
+        }
+
+        const subCategory = parentCategory.subCategories.find(
+          (subCat) => subCat._id.toString() === category._id.toString()
+        );
+
+        response.details = {
+          subCategoryId: subCategory._id,
+          subCategoryName: subCategory.name,
+          parentCategory: {
+            categoryId: parentCategory._id,
+            categoryName: parentCategory.name,
+          },
+        };
+      } else if (categoryModel === "GrandCategory") {
+        const parentCategory = await Category.findOne({
+          "subCategories.grandCategories._id": category._id,
+        }).lean();
+
+        if (!parentCategory) {
+          throw new Error("Parent category for grandcategory not found");
+        }
+
+        let parentSubCategory;
+        parentCategory.subCategories.forEach((subCat) => {
+          const grandCat = subCat.grandCategories.find(
+            (grandCat) => grandCat._id.toString() === category._id.toString()
+          );
+
+          if (grandCat) {
+            parentSubCategory = {
+              subCategoryId: subCat._id,
+              subCategoryName: subCat.name,
+              grandCategoryId: grandCat._id,
+              grandCategoryName: grandCat.name,
+            };
+          }
+        });
+
+        if (!parentSubCategory) {
+          throw new Error("Parent subcategory for grandcategory not found");
+        }
+
+        response.details = {
+          grandCategoryId: parentSubCategory.grandCategoryId,
+          grandCategoryName: parentSubCategory.grandCategoryName,
+          parentSubCategory: {
+            subCategoryId: parentSubCategory.subCategoryId,
+            subCategoryName: parentSubCategory.subCategoryName,
+          },
+          parentCategory: {
+            categoryId: parentCategory._id,
+            categoryName: parentCategory.name,
+          },
+        };
+      } else {
+        throw new Error("Invalid category model");
+      }
+
+      return { success: true, data: response };
+    } catch (error) {
+      return { success: false, message: error.message };
     }
-
-    return product;
   }
 }
 

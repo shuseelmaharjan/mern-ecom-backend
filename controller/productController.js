@@ -83,7 +83,7 @@ class ProductController {
     const { productId } = req.params;
 
     try {
-      const product = await productService.getProductById(productId);
+      const product = await productService.getProductDetails(productId);
       res.status(200).json({
         success: true,
         message: "Product details fetched successfully",
@@ -93,6 +93,23 @@ class ProductController {
       res.status(404).json({
         success: false,
         message: error.message || "Unable to fetch product details",
+      });
+    }
+  }
+
+  async getCategoryHierarchy(req, res) {
+    try {
+      const { productId } = req.params;
+      const data = await productService.getCategoryHierarchy(productId);
+      return res.status(200).json({
+        success: true,
+        message: "Category details fetched successfully",
+        data,
+      });
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
       });
     }
   }

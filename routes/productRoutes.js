@@ -25,4 +25,8 @@ router.get(
 
 router.get("/v1/product/:productId", productController.getProductDetails);
 
+router.get(
+  "/v1/product-category-details/:productId",
+  productController.getCategoryHierarchy
+);
 module.exports = router;
