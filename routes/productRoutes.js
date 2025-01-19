@@ -29,4 +29,7 @@ router.get(
   "/v1/product-category-details/:productId",
   productController.getCategoryHierarchy
 );
+
+router.post("/v1/products-costing", productController.getProductsCosting);
+
 module.exports = router;

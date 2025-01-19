@@ -349,99 +349,94 @@ class ProductService {
     return campaign;
   }
 
-  async getCategoryHierarchy(productId) {
-    try {
-      const product = await Product.findById(productId)
-        .populate("category")
-        .lean();
+  async getProductCostingDetails(productRequests) {
+    const now = new Date();
+    const productIds = productRequests.map((req) => req.productId);
+
+    const products = await Product.find({
+      _id: { $in: productIds },
+      active: true,
+    }).select(
+      "title media price productLimit brand shipping internationalShipping"
+    );
+
+    const engagements = await Engagement.find({
+      productId: { $in: productIds },
+      expiryTime: { $gt: now },
+    }).populate("campaignId");
+
+    const results = productRequests.map((request) => {
+      const product = products.find(
+        (p) => p._id.toString() === request.productId.toString()
+      );
 
       if (!product) {
-        throw new Error("Product not found");
+        return { productId: request.productId, error: "Product not found" };
       }
 
-      const { categoryModel, category } = product;
-
-      const response = {
-        productId: product._id,
-        categoryModel,
-        details: {},
-      };
-
-      if (categoryModel === "Category") {
-        response.details = {
-          categoryId: category._id,
-          categoryName: category.name,
+      if (request.quantity > product.productLimit) {
+        return {
+          productId: request.productId,
+          error: `Requested quantity exceeds the product limit of ${product.productLimit}`,
         };
-      } else if (categoryModel === "SubCategory") {
-        const parentCategory = await Category.findOne({
-          "subCategories._id": category._id,
-        }).lean();
+      }
 
-        if (!parentCategory) {
-          throw new Error("Parent category for subcategory not found");
-        }
+      const engagement = engagements.find(
+        (e) => e.productId.toString() === product._id.toString()
+      );
 
-        const subCategory = parentCategory.subCategories.find(
-          (subCat) => subCat._id.toString() === category._id.toString()
-        );
+      let campaignDetails = null;
+      let totalAmount = product.price * request.quantity;
+      let discountedAmount = totalAmount;
+      let offeredCost = product.price;
+      let campaignStatus = false;
+      let freeShipping =
+        product.shipping.freeShipping ||
+        product.internationalShipping.freeShipping;
 
-        response.details = {
-          subCategoryId: subCategory._id,
-          subCategoryName: subCategory.name,
-          parentCategory: {
-            categoryId: parentCategory._id,
-            categoryName: parentCategory.name,
-          },
-        };
-      } else if (categoryModel === "GrandCategory") {
-        const parentCategory = await Category.findOne({
-          "subCategories.grandCategories._id": category._id,
-        }).lean();
+      if (engagement) {
+        const campaign = engagement.campaignId;
+        const isValidCampaign = campaign.isActive && campaign.expiryTime > now;
 
-        if (!parentCategory) {
-          throw new Error("Parent category for grandcategory not found");
-        }
+        if (isValidCampaign) {
+          const discount = campaign.discountPercentage || 0;
+          const discountAmount = (totalAmount * discount) / 100;
 
-        let parentSubCategory;
-        parentCategory.subCategories.forEach((subCat) => {
-          const grandCat = subCat.grandCategories.find(
-            (grandCat) => grandCat._id.toString() === category._id.toString()
-          );
+          discountedAmount = totalAmount - discountAmount;
+          offeredCost = product.price - (product.price * discount) / 100;
 
-          if (grandCat) {
-            parentSubCategory = {
-              subCategoryId: subCat._id,
-              subCategoryName: subCat.name,
-              grandCategoryId: grandCat._id,
-              grandCategoryName: grandCat.name,
-            };
+          campaignDetails = {
+            saleType: campaign.saleType,
+            discountPercentage: discount,
+            offeredCost: offeredCost.toFixed(2),
+          };
+          campaignStatus = true;
+
+          if (campaign.saleType === "FREESHIPPING") {
+            freeShipping = true;
           }
-        });
-
-        if (!parentSubCategory) {
-          throw new Error("Parent subcategory for grandcategory not found");
         }
-
-        response.details = {
-          grandCategoryId: parentSubCategory.grandCategoryId,
-          grandCategoryName: parentSubCategory.grandCategoryName,
-          parentSubCategory: {
-            subCategoryId: parentSubCategory.subCategoryId,
-            subCategoryName: parentSubCategory.subCategoryName,
-          },
-          parentCategory: {
-            categoryId: parentCategory._id,
-            categoryName: parentCategory.name,
-          },
-        };
-      } else {
-        throw new Error("Invalid category model");
       }
 
-      return { success: true, data: response };
-    } catch (error) {
-      return { success: false, message: error.message };
-    }
+      return {
+        productId: product._id,
+        title: product.title,
+        media: product.media.images.find((img) => img.default),
+        price: product.price,
+        productLimit: product.productLimit,
+        requestedQuantity: request.quantity,
+        totalAmount: totalAmount.toFixed(2),
+        discountedAmount: discountedAmount.toFixed(2),
+        offeredCost: campaignStatus
+          ? offeredCost.toFixed(2)
+          : product.price.toFixed(2),
+        campaignDetails,
+        campaignStatus,
+        freeShipping,
+      };
+    });
+
+    return results;
   }
 }
 
