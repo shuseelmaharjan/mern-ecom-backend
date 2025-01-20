@@ -440,6 +440,88 @@ class ProductService {
 
     return results;
   }
+
+  async getCategoryHierarchy(productId) {
+    try {
+      // Fetch the product
+      const product = await Product.findById(productId).populate("category");
+      if (!product) {
+        throw new Error("Product not found");
+      }
+
+      let categoryData = null;
+
+      switch (product.categoryModel) {
+        case "Category":
+          categoryData = await Category.findById(product.category);
+          break;
+        case "SubCategory":
+          categoryData = await Category.findOne({
+            "subCategories._id": product.category,
+          });
+          break;
+        case "GrandCategory":
+          categoryData = await Category.findOne({
+            "subCategories.grandCategories._id": product.category,
+          });
+          break;
+        default:
+          throw new Error("Invalid category model");
+      }
+
+      if (!categoryData) {
+        throw new Error("Category data not found");
+      }
+
+      const hierarchy = {
+        category: null,
+        subCategory: null,
+        grandCategory: null,
+      };
+
+      if (product.categoryModel === "Category") {
+        hierarchy.category = {
+          id: categoryData._id,
+          name: categoryData.name,
+        };
+      } else if (product.categoryModel === "SubCategory") {
+        const subCategory = categoryData.subCategories.find((sub) =>
+          sub._id.equals(product.category)
+        );
+        hierarchy.category = { id: categoryData._id, name: categoryData.name };
+        hierarchy.subCategory = { id: subCategory._id, name: subCategory.name };
+      } else if (product.categoryModel === "GrandCategory") {
+        let subCategory, grandCategory;
+        categoryData.subCategories.forEach((sub) => {
+          sub.grandCategories.forEach((grand) => {
+            if (grand._id.equals(product.category)) {
+              subCategory = sub;
+              grandCategory = grand;
+            }
+          });
+        });
+
+        if (subCategory && grandCategory) {
+          hierarchy.category = {
+            id: categoryData._id,
+            name: categoryData.name,
+          };
+          hierarchy.subCategory = {
+            id: subCategory._id,
+            name: subCategory.name,
+          };
+          hierarchy.grandCategory = {
+            id: grandCategory._id,
+            name: grandCategory.name,
+          };
+        }
+      }
+
+      return hierarchy;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
 }
 
 module.exports = new ProductService();

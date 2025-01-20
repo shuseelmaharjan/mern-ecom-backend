@@ -59,6 +59,103 @@ class AlgorithmService {
       throw error;
     }
   }
+
+  async getFypService({ limit = 20, skip = 0 }) {
+    const products = await Product.find({ active: true })
+      .sort({ createdAt: -1, views: -1 })
+      .skip(skip)
+      .limit(limit)
+      .select("title media price brand views");
+
+    const recommendedProducts = [];
+    for (const product of products) {
+      const engagement = await Engagement.findOne({
+        productId: product._id,
+        expiryTime: { $gt: new Date() },
+      }).populate("campaignId");
+
+      let campaignDetails = null;
+      if (engagement && engagement.campaignId.isActive) {
+        const campaign = engagement.campaignId;
+        campaignDetails = {
+          saleType: campaign.saleType,
+          expiryTime: campaign.expiryTime,
+          discountPercentage: campaign.discountPercentage,
+        };
+      }
+
+      recommendedProducts.push({
+        productId: product._id,
+        title: product.title,
+        media: product.media?.images
+          ?.filter((img) => img.default || true)
+          .slice(0, 2),
+        price: product.price,
+        brand: product.brand || null,
+        views: product.views,
+        campaign: campaignDetails,
+      });
+    }
+
+    return recommendedProducts;
+  }
+
+  async getRelatedProducts(productId, limit = 20) {
+    try {
+      const product = await Product.findById(productId);
+
+      if (!product) {
+        throw new Error("Product not found");
+      }
+
+      const { tags } = product;
+
+      const relatedProducts = await Product.find({
+        tags: { $in: tags },
+        _id: { $ne: productId },
+        active: true,
+      })
+        .sort({ views: -1, createdAt: -1 })
+        .limit(limit)
+        .select("title media price brand views");
+
+      const recommendedProducts = [];
+
+      for (const product of relatedProducts) {
+        const engagement = await Engagement.findOne({
+          productId: product._id,
+          expiryTime: { $gt: new Date() },
+        }).populate("campaignId");
+
+        let campaignDetails = null;
+        if (engagement && engagement.campaignId.isActive) {
+          const campaign = engagement.campaignId;
+          campaignDetails = {
+            saleType: campaign.saleType,
+            expiryTime: campaign.expiryTime,
+            discountPercentage: campaign.discountPercentage,
+          };
+        }
+
+        recommendedProducts.push({
+          productId: product._id,
+          title: product.title,
+          media: product.media?.images
+            ?.filter((img) => img.default || true)
+            .slice(0, 2),
+          price: product.price,
+          brand: product.brand || null,
+          views: product.views,
+          campaign: campaignDetails,
+        });
+      }
+
+      return recommendedProducts;
+    } catch (error) {
+      console.error("Error fetching related products:", error);
+      throw error;
+    }
+  }
 }
 
 module.exports = new AlgorithmService();

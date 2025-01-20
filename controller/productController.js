@@ -118,11 +118,9 @@ class ProductController {
     try {
       const productRequests = req.body.products;
       if (!Array.isArray(req.body.products) || req.body.products.length === 0) {
-        return res
-          .status(400)
-          .json({
-            error: "Invalid product data. Provide an array of product objects.",
-          });
+        return res.status(400).json({
+          error: "Invalid product data. Provide an array of product objects.",
+        });
       }
 
       const results = await productService.getProductCostingDetails(

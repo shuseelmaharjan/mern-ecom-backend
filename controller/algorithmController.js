@@ -10,6 +10,54 @@ class AlgorithmController {
       res.status(500).json({ message: "Server Error", error: error.message });
     }
   }
+
+  async getFypRecommendations(req, res) {
+    try {
+      const { limit, skip } = req.query;
+
+      const parsedLimit = parseInt(limit) || 20;
+      const parsedSkip = parseInt(skip) || 0;
+
+      const recommendations = await algorithmService.getFypService({
+        limit: parsedLimit,
+        skip: parsedSkip,
+      });
+
+      res.status(200).json({
+        success: true,
+        data: recommendations,
+      });
+    } catch (error) {
+      console.error("Error fetching recommendations:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error.",
+      });
+    }
+  }
+
+  async getRelatedProducts(req, res) {
+    try {
+      const { productId } = req.params;
+      const { limit = 20 } = req.query;
+
+      const relatedProducts = await algorithmService.getRelatedProducts(
+        productId,
+        parseInt(limit)
+      );
+
+      res.status(200).json({
+        success: true,
+        data: relatedProducts,
+      });
+    } catch (error) {
+      console.error("Error fetching related products:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error.",
+      });
+    }
+  }
 }
 
 module.exports = new AlgorithmController();
