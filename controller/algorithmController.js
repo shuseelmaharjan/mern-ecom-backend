@@ -1,6 +1,7 @@
 const algorithmService = require("../services/algorithmService");
 
 class AlgorithmController {
+  //service 1
   async getFlashSaleProducts(req, res) {
     try {
       const products = await algorithmService.getFlashSaleProducts();
@@ -11,6 +12,7 @@ class AlgorithmController {
     }
   }
 
+  //service 2
   async getFypRecommendations(req, res) {
     try {
       const { limit, skip } = req.query;
@@ -36,6 +38,7 @@ class AlgorithmController {
     }
   }
 
+  //service 3
   async getRelatedProducts(req, res) {
     try {
       const { productId } = req.params;
@@ -59,6 +62,44 @@ class AlgorithmController {
     }
   }
 
+  //service 4
+  async getProductsByCategory(req, res) {
+    const { categoryId } = req.params;
+    const { page = 1, limit = 2 } = req.query;
+
+    try {
+      const products = await algorithmService.getProductsByCategory(
+        categoryId,
+        parseInt(page),
+        parseInt(limit)
+      );
+      res.json(products);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  //service 5
+  async getFilteredProductsByCategory(req, res) {
+    const { categoryId } = req.params;
+    const { page = 1, limit = 2 } = req.query;
+    const filters = req.query;
+
+    try {
+      const filteredProducts =
+        await algorithmService.getFilteredProductsByCategory(
+          categoryId,
+          filters,
+          parseInt(page),
+          parseInt(limit)
+        );
+      res.json(filteredProducts);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  //service 6
   async getProductsBySubCategory(req, res) {
     const { subCategoryId } = req.params;
     const { page = 1, limit = 2 } = req.query;
@@ -81,6 +122,7 @@ class AlgorithmController {
     }
   }
 
+  //service 7
   async getFilteredProductsBySubCategory(req, res) {
     const { subCategoryId } = req.params;
     const { page = 1, limit = 2 } = req.query;
@@ -100,6 +142,7 @@ class AlgorithmController {
     }
   }
 
+  //service 8
   async getProductsByGrandCategory(req, res) {
     const { grandCategoryId } = req.params;
     const { page = 1, limit = 2 } = req.query;
@@ -123,6 +166,7 @@ class AlgorithmController {
     }
   }
 
+  //service 9
   async getFilteredProductsByGrandCategory(req, res) {
     const { grandCategoryId } = req.params;
     const { page = 1, limit = 2 } = req.query;
@@ -142,38 +186,27 @@ class AlgorithmController {
     }
   }
 
-  async getProductsByCategory(req, res) {
-    const { categoryId } = req.params;
-    const { page = 1, limit = 2 } = req.query;
-
+  //service 10
+  async getCategoryAttributes(req, res) {
     try {
-      const products = await algorithmService.getProductsByCategory(
-        categoryId,
-        parseInt(page),
-        parseInt(limit)
+      const { categoryId } = req.params;
+
+      const attributes = await algorithmService.getCategoryAttributes(
+        categoryId
       );
-      res.json(products);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  }
 
-  async getFilteredProducts(req, res) {
-    const { categoryId } = req.params;
-    const { page = 1, limit = 2 } = req.query;
-    const filters = req.query;
-
-    try {
-      const filteredProducts =
-        await algorithmService.getFilteredProductsByCategory(
-          categoryId,
-          filters,
-          parseInt(page),
-          parseInt(limit)
-        );
-      res.json(filteredProducts);
+      res.status(200).json({
+        brands: attributes.brands,
+        colors: attributes.colors.map((color) => ({
+          name: color.name,
+          code: color.code,
+        })),
+        sizes: attributes.sizes,
+        tags: attributes.tags,
+        materials: attributes.materials,
+      });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ message: error.message });
     }
   }
 }

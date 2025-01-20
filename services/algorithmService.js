@@ -4,6 +4,7 @@ const Product = require("../models/product");
 const { Category } = require("../models/categories");
 
 class AlgorithmService {
+  //for flash sale product items service 1
   async getFlashSaleProducts() {
     try {
       const flashSaleCampaigns = await Campaign.find({
@@ -61,6 +62,7 @@ class AlgorithmService {
     }
   }
 
+  //for you page service 2
   async getFypService({ limit = 20, skip = 0 }) {
     const products = await Product.find({ active: true })
       .sort({ createdAt: -1, views: -1 })
@@ -101,6 +103,7 @@ class AlgorithmService {
     return recommendedProducts;
   }
 
+  //related content service 3
   async getRelatedProducts(productId, limit = 20) {
     try {
       const product = await Product.findById(productId);
@@ -158,6 +161,219 @@ class AlgorithmService {
     }
   }
 
+  //get category items service 4
+  async getProductsByCategory(categoryId, page = 1, limit = 2) {
+    try {
+      const category = await Category.findById(categoryId);
+
+      if (!category) {
+        throw new Error("Category not found for the provided category ID");
+      }
+
+      let products = await Product.find({
+        categoryModel: "Category",
+        category: categoryId,
+        active: true,
+      })
+        .skip((page - 1) * limit)
+        .limit(limit);
+
+      if (products.length === 0) {
+        if (category.subCategories.length > 0) {
+          const subCategoryIds = category.subCategories.map(
+            (subCategory) => subCategory._id
+          );
+          products = await Product.find({
+            categoryModel: "SubCategory",
+            category: { $in: subCategoryIds },
+            active: true,
+          })
+            .skip((page - 1) * limit)
+            .limit(limit);
+        }
+      }
+
+      if (products.length === 0) {
+        if (category.subCategories.length > 0) {
+          const grandCategoryIds = category.subCategories
+            .map((subCategory) => subCategory.grandCategories)
+            .flat()
+            .map((grandCategory) => grandCategory._id);
+
+          products = await Product.find({
+            categoryModel: "GrandCategory",
+            category: { $in: grandCategoryIds },
+            active: true,
+          })
+            .skip((page - 1) * limit)
+            .limit(limit);
+        }
+      }
+
+      const productsWithCampaign = await Promise.all(
+        products.map(async (product) => {
+          const engagement = await Engagement.findOne({
+            productId: product._id,
+          }).populate("campaignId");
+
+          if (engagement) {
+            const campaign = engagement.campaignId;
+            const isValidCampaign =
+              campaign &&
+              campaign.isActive &&
+              new Date() < new Date(campaign.expiryTime);
+
+            if (isValidCampaign) {
+              product.campaign = {
+                saleType: campaign.saleType,
+                expiryTime: campaign.expiryTime,
+                discountPercentage: campaign.discountPercentage,
+              };
+            }
+          }
+
+          const defaultImage = product.media.images.find(
+            (image) => image.default
+          );
+
+          const secondImage = product.media.images[1];
+
+          const productDetails = {
+            _id: product._id,
+            title: product.title,
+            price: product.price,
+            category: product.category,
+            defaultImage: defaultImage ? defaultImage.url : null,
+            secondImage: secondImage ? secondImage.url : null,
+            colors: product.colors?.details || [],
+            size: product.size || [],
+            materials: product.materials || [],
+            tags: product.tags || [],
+            campaign: product.campaign,
+          };
+
+          return productDetails;
+        })
+      );
+
+      return productsWithCampaign;
+    } catch (error) {
+      console.error("Error fetching products for the category:", error);
+      throw new Error("Error fetching products for the category");
+    }
+  }
+
+  //get filter at category servic 5
+  async getFilteredProductsByCategory(
+    categoryId,
+    filters,
+    page = 1,
+    limit = 2
+  ) {
+    try {
+      const category = await Category.findById(categoryId).populate({
+        path: "subCategories",
+        populate: { path: "grandCategories" },
+      });
+
+      if (!category) {
+        throw new Error("Category not found for the provided category ID");
+      }
+
+      const subCategoryIds = category.subCategories.map((sub) => sub._id);
+      const grandCategoryIds = category.subCategories
+        .flatMap((sub) => sub.grandCategories)
+        .map((grand) => grand._id);
+
+      const filterCriteria = {
+        active: true,
+        $or: [
+          { categoryModel: "Category", category: categoryId },
+          { categoryModel: "SubCategory", category: { $in: subCategoryIds } },
+          {
+            categoryModel: "GrandCategory",
+            category: { $in: grandCategoryIds },
+          },
+        ],
+      };
+
+      if (filters.size && filters.size.length > 0) {
+        filterCriteria.size = { $in: filters.size };
+      }
+
+      if (filters.brand) {
+        filterCriteria.brand = filters.brand;
+      }
+
+      if (filters.price) {
+        const [minPrice, maxPrice] = filters.price.split("-");
+        filterCriteria.price = { $gte: minPrice, $lte: maxPrice };
+      }
+
+      if (filters.tags && filters.tags.length > 0) {
+        filterCriteria.tags = { $in: filters.tags };
+      }
+
+      if (filters.materials && filters.materials.length > 0) {
+        filterCriteria.materials = { $in: filters.materials };
+      }
+
+      let products = await Product.find(filterCriteria)
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .populate("categoryModel category");
+
+      const productsWithCampaign = await Promise.all(
+        products.map(async (product) => {
+          const engagement = await Engagement.findOne({
+            productId: product._id,
+          }).populate("campaignId");
+
+          if (engagement) {
+            const campaign = engagement.campaignId;
+            const isValidCampaign =
+              campaign &&
+              campaign.isActive &&
+              new Date() < new Date(campaign.expiryTime);
+
+            if (isValidCampaign) {
+              product.campaign = {
+                saleType: campaign.saleType,
+                expiryTime: campaign.expiryTime,
+                discountPercentage: campaign.discountPercentage,
+              };
+            }
+          }
+
+          const defaultImage = product.media.images.find(
+            (image) => image.default
+          );
+          const secondImage = product.media.images[1];
+
+          return {
+            _id: product._id,
+            title: product.title,
+            price: product.price,
+            category: product.category,
+            defaultImage: defaultImage ? defaultImage.url : null,
+            secondImage: secondImage ? secondImage.url : null,
+            colors: product.colors?.details || [],
+            size: product.size || [],
+            materials: product.materials || [],
+            tags: product.tags || [],
+            campaign: product.campaign,
+          };
+        })
+      );
+
+      return productsWithCampaign;
+    } catch (error) {
+      console.error("Error fetching filtered products by category:", error);
+      throw new Error("Error fetching filtered products by category");
+    }
+  }
+
+  //get subcategories items service 6
   async getProductsBySubCategory(subCategoryId, page = 1, limit = 2) {
     try {
       const category = await Category.findOne({
@@ -248,6 +464,7 @@ class AlgorithmService {
     }
   }
 
+  //get filter at subcategory service 7
   async getFilteredProductsBySubCategory(
     subCategoryId,
     filters,
@@ -363,6 +580,7 @@ class AlgorithmService {
     }
   }
 
+  //get grandcategory items service 8
   async getProductsByGrandCategory(grandCategoryId, page = 1, limit = 2) {
     try {
       const skip = (page - 1) * limit;
@@ -429,6 +647,7 @@ class AlgorithmService {
     }
   }
 
+  //get filter at grandcategory service 9
   async getFilteredProductsByGrandCategory(
     grandCategoryId,
     filters,
@@ -522,113 +741,8 @@ class AlgorithmService {
     }
   }
 
-  async getProductsByCategory(categoryId, page = 1, limit = 2) {
-    try {
-      const category = await Category.findById(categoryId);
-
-      if (!category) {
-        throw new Error("Category not found for the provided category ID");
-      }
-
-      let products = await Product.find({
-        categoryModel: "Category",
-        category: categoryId,
-        active: true,
-      })
-        .skip((page - 1) * limit)
-        .limit(limit);
-
-      if (products.length === 0) {
-        if (category.subCategories.length > 0) {
-          const subCategoryIds = category.subCategories.map(
-            (subCategory) => subCategory._id
-          );
-          products = await Product.find({
-            categoryModel: "SubCategory",
-            category: { $in: subCategoryIds },
-            active: true,
-          })
-            .skip((page - 1) * limit)
-            .limit(limit);
-        }
-      }
-
-      if (products.length === 0) {
-        if (category.subCategories.length > 0) {
-          const grandCategoryIds = category.subCategories
-            .map((subCategory) => subCategory.grandCategories)
-            .flat()
-            .map((grandCategory) => grandCategory._id);
-
-          products = await Product.find({
-            categoryModel: "GrandCategory",
-            category: { $in: grandCategoryIds },
-            active: true,
-          })
-            .skip((page - 1) * limit)
-            .limit(limit);
-        }
-      }
-
-      const productsWithCampaign = await Promise.all(
-        products.map(async (product) => {
-          const engagement = await Engagement.findOne({
-            productId: product._id,
-          }).populate("campaignId");
-
-          if (engagement) {
-            const campaign = engagement.campaignId;
-            const isValidCampaign =
-              campaign &&
-              campaign.isActive &&
-              new Date() < new Date(campaign.expiryTime);
-
-            if (isValidCampaign) {
-              product.campaign = {
-                saleType: campaign.saleType,
-                expiryTime: campaign.expiryTime,
-                discountPercentage: campaign.discountPercentage,
-              };
-            }
-          }
-
-          const defaultImage = product.media.images.find(
-            (image) => image.default
-          );
-
-          const secondImage = product.media.images[1];
-
-          const productDetails = {
-            _id: product._id,
-            title: product.title,
-            price: product.price,
-            category: product.category,
-            defaultImage: defaultImage ? defaultImage.url : null,
-            secondImage: secondImage ? secondImage.url : null,
-            colors: product.colors?.details || [],
-            size: product.size || [],
-            materials: product.materials || [],
-            tags: product.tags || [],
-            campaign: product.campaign,
-          };
-
-          return productDetails;
-        })
-      );
-
-      return productsWithCampaign;
-    } catch (error) {
-      console.error("Error fetching products for the category:", error);
-      throw new Error("Error fetching products for the category");
-    }
-  }
-
-  async getFilteredProductsByCategory(
-    categoryId,
-    filters,
-    page = 1,
-    limit = 2
-  ) {
+  //filter attributes return for category service 10
+  async getCategoryAttributes(categoryId) {
     try {
       const category = await Category.findById(categoryId).populate({
         path: "subCategories",
@@ -656,79 +770,32 @@ class AlgorithmService {
         ],
       };
 
-      if (filters.size && filters.size.length > 0) {
-        filterCriteria.size = { $in: filters.size };
-      }
+      const products = await Product.find(filterCriteria);
 
-      if (filters.brand) {
-        filterCriteria.brand = filters.brand;
-      }
+      const brands = [
+        ...new Set(products.map((product) => product.brand).filter(Boolean)),
+      ];
+      const colors = [
+        ...new Map(
+          products
+            .flatMap((product) => product.colors?.details || [])
+            .map((color) => [color.name + color.code, color])
+        ).values(),
+      ];
+      const sizes = [
+        ...new Set(products.flatMap((product) => product.size || [])),
+      ];
+      const tags = [
+        ...new Set(products.flatMap((product) => product.tags || [])),
+      ];
+      const materials = [
+        ...new Set(products.flatMap((product) => product.materials || [])),
+      ];
 
-      if (filters.price) {
-        const [minPrice, maxPrice] = filters.price.split("-");
-        filterCriteria.price = { $gte: minPrice, $lte: maxPrice };
-      }
-
-      if (filters.tags && filters.tags.length > 0) {
-        filterCriteria.tags = { $in: filters.tags };
-      }
-
-      if (filters.materials && filters.materials.length > 0) {
-        filterCriteria.materials = { $in: filters.materials };
-      }
-
-      let products = await Product.find(filterCriteria)
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .populate("categoryModel category");
-
-      const productsWithCampaign = await Promise.all(
-        products.map(async (product) => {
-          const engagement = await Engagement.findOne({
-            productId: product._id,
-          }).populate("campaignId");
-
-          if (engagement) {
-            const campaign = engagement.campaignId;
-            const isValidCampaign =
-              campaign &&
-              campaign.isActive &&
-              new Date() < new Date(campaign.expiryTime);
-
-            if (isValidCampaign) {
-              product.campaign = {
-                saleType: campaign.saleType,
-                expiryTime: campaign.expiryTime,
-                discountPercentage: campaign.discountPercentage,
-              };
-            }
-          }
-
-          const defaultImage = product.media.images.find(
-            (image) => image.default
-          );
-          const secondImage = product.media.images[1];
-
-          return {
-            _id: product._id,
-            title: product.title,
-            price: product.price,
-            category: product.category,
-            defaultImage: defaultImage ? defaultImage.url : null,
-            secondImage: secondImage ? secondImage.url : null,
-            colors: product.colors?.details || [],
-            size: product.size || [],
-            materials: product.materials || [],
-            tags: product.tags || [],
-            campaign: product.campaign,
-          };
-        })
-      );
-
-      return productsWithCampaign;
+      return { brands, colors, sizes, tags, materials };
     } catch (error) {
-      console.error("Error fetching filtered products by category:", error);
-      throw new Error("Error fetching filtered products by category");
+      console.error("Error fetching category attributes:", error);
+      throw new Error("Error fetching category attributes");
     }
   }
 }

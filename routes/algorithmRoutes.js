@@ -12,6 +12,15 @@ router.get(
 );
 
 router.get(
+  "/v1/product-category/:categoryId",
+  algorithmController.getProductsByCategory
+);
+router.get(
+  "/v1/category-filter/:categoryId",
+  algorithmController.getFilteredProductsByCategory
+);
+
+router.get(
   "/v1/product-subcategory/:subCategoryId",
   algorithmController.getProductsBySubCategory
 );
@@ -28,16 +37,12 @@ router.get(
 
 router.get(
   "/v1/grandcategory-filter/:grandCategoryId",
-  algorithmController.getFilteredProductsByGrandCategory
+  algorithmController.getFilteredProductsByCategory
 );
 
 router.get(
-  "/v1/product-category/:categoryId",
-  algorithmController.getProductsByCategory
-);
-router.get(
-  "/v1/category-filter/:categoryId",
-  algorithmController.getFilteredProducts
+  "/v1/category/:categoryId/filter-attributes",
+  algorithmController.getCategoryAttributes
 );
 
 module.exports = router;
