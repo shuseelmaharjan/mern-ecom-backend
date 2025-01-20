@@ -10,8 +10,14 @@ router.get(
   "/v1/related-products/:productId",
   algorithmController.getRelatedProducts
 );
+
 router.get(
-  "/v1/grandcategory/:grandCategoryId",
+  "/v1/product-subcategory/:subCategoryId",
+  algorithmController.getProductsBySubCategory
+);
+
+router.get(
+  "/v1/product-grandcategory/:grandCategoryId",
   algorithmController.getProductsByGrandCategory
 );
 

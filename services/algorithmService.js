@@ -1,6 +1,7 @@
 const { Campaign } = require("../models/campaign");
 const Engagement = require("../models/engagement");
 const Product = require("../models/product");
+const { Category } = require("../models/categories");
 
 class AlgorithmService {
   async getFlashSaleProducts() {
@@ -157,10 +158,101 @@ class AlgorithmService {
     }
   }
 
+  async getProductsBySubCategory(subCategoryId, page = 1, limit = 2) {
+    try {
+      const category = await Category.findOne({
+        "subCategories._id": subCategoryId,
+      });
+
+      if (!category) {
+        throw new Error("Category not found for the provided subcategory");
+      }
+
+      let products = await Product.find({
+        categoryModel: "SubCategory",
+        category: subCategoryId,
+        active: true,
+      })
+        .skip((page - 1) * limit)
+        .limit(limit);
+
+      if (products.length === 0) {
+        const subCategory = category.subCategories.find(
+          (sub) => sub._id.toString() === subCategoryId.toString()
+        );
+
+        if (subCategory && subCategory.grandCategories.length > 0) {
+          const grandCategoryIds = subCategory.grandCategories.map(
+            (grandCat) => grandCat._id
+          );
+          products = await Product.find({
+            categoryModel: "GrandCategory",
+            category: { $in: grandCategoryIds },
+            active: true,
+          })
+            .skip((page - 1) * limit)
+            .limit(limit);
+        }
+      }
+
+      const productsWithCampaign = await Promise.all(
+        products.map(async (product) => {
+          const engagement = await Engagement.findOne({
+            productId: product._id,
+          }).populate("campaignId");
+
+          if (engagement) {
+            const campaign = engagement.campaignId;
+            const isValidCampaign =
+              campaign &&
+              campaign.isActive &&
+              new Date() < new Date(campaign.expiryTime);
+
+            if (isValidCampaign) {
+              product.campaign = {
+                saleType: campaign.saleType,
+                expiryTime: campaign.expiryTime,
+                discountPercentage: campaign.discountPercentage,
+              };
+            }
+          }
+
+          const defaultImage = product.media.images.find(
+            (image) => image.default
+          );
+
+          const secondImage = product.media.images[1];
+
+          const productDetails = {
+            _id: product._id,
+            title: product.title,
+            price: product.price,
+            category: product.category,
+            defaultImage: defaultImage ? defaultImage.url : null,
+            secondImage: secondImage ? secondImage.url : null,
+            colors: product.colors?.details || [],
+            size: product.size || [],
+            materials: product.materials || [],
+            tags: product.tags || [],
+            campaign: product.campaign,
+          };
+
+          return productDetails;
+        })
+      );
+
+      return productsWithCampaign;
+    } catch (error) {
+      console.error("Error fetching products for the subcategory:", error);
+      throw new Error("Error fetching products for the subcategory");
+    }
+  }
+
   async getProductsByGrandCategory(grandCategoryId, page = 1, limit = 2) {
     try {
       const skip = (page - 1) * limit;
 
+      // Fetch products from the GrandCategory
       const products = await Product.find({
         categoryModel: "GrandCategory",
         category: grandCategoryId,
@@ -174,11 +266,25 @@ class AlgorithmService {
         let productDetails = {
           productId: product._id,
           title: product.title,
-          media: product.media.images,
           price: product.price,
           brand: product.brand,
           views: product.views,
+
+          colors: product.colors?.details || [],
+          size: product.size || [],
+          materials: product.materials || [],
+          tags: product.tags || [],
         };
+
+        const defaultImage = product.media.images.find(
+          (image) => image.default
+        );
+
+        const secondImage = product.media.images[1];
+
+        productDetails.defaultImage = defaultImage ? defaultImage.url : null;
+
+        productDetails.secondImage = secondImage ? secondImage.url : null;
 
         const engagement = await Engagement.findOne({
           productId: product._id,

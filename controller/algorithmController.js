@@ -59,24 +59,45 @@ class AlgorithmController {
     }
   }
 
-  async getProductsByGrandCategory(req, res) {
-    try {
-      const grandCategoryId = req.params.grandCategoryId;
-      const page = parseInt(req.query.page) || 1;
-      const limit = parseInt(req.query.limit) || 2;
+  async getProductsBySubCategory(req, res) {
+    const { subCategoryId } = req.params;
+    const { page = 1, limit = 2 } = req.query;
 
+    try {
+      const products = await algorithmService.getProductsBySubCategory(
+        subCategoryId,
+        page,
+        limit
+      );
+      return res.json({
+        success: true,
+        data: products,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  async getProductsByGrandCategory(req, res) {
+    const { grandCategoryId } = req.params;
+    const { page = 1, limit = 2 } = req.query;
+
+    try {
       const products = await algorithmService.getProductsByGrandCategory(
         grandCategoryId,
         page,
         limit
       );
-
-      res.status(200).json({
+      return res.json({
         success: true,
         data: products,
       });
     } catch (error) {
-      res.status(500).json({
+      console.error("Error in getProductsByGrandCategory:", error);
+      return res.status(500).json({
         success: false,
         message: error.message,
       });
