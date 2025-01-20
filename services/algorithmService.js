@@ -248,6 +248,121 @@ class AlgorithmService {
     }
   }
 
+  async getFilteredProductsBySubCategory(
+    subCategoryId,
+    filters,
+    page = 1,
+    limit = 2
+  ) {
+    try {
+      const category = await Category.findOne({
+        "subCategories._id": subCategoryId,
+      });
+
+      if (!category) {
+        throw new Error("Category not found for the provided subcategory");
+      }
+
+      const filterCriteria = {
+        categoryModel: "SubCategory",
+        category: subCategoryId,
+        active: true,
+      };
+
+      if (filters.size && filters.size.length > 0) {
+        filterCriteria.size = { $in: filters.size };
+      }
+
+      if (filters.brand) {
+        filterCriteria.brand = filters.brand;
+      }
+
+      if (filters.price) {
+        const [minPrice, maxPrice] = filters.price.split("-");
+        filterCriteria.price = { $gte: minPrice, $lte: maxPrice };
+      }
+
+      if (filters.tags && filters.tags.length > 0) {
+        filterCriteria.tags = { $in: filters.tags };
+      }
+
+      if (filters.materials && filters.materials.length > 0) {
+        filterCriteria.materials = { $in: filters.materials };
+      }
+
+      let products = await Product.find(filterCriteria)
+        .skip((page - 1) * limit)
+        .limit(limit);
+
+      if (products.length === 0) {
+        const subCategory = category.subCategories.find(
+          (sub) => sub._id.toString() === subCategoryId.toString()
+        );
+
+        if (subCategory && subCategory.grandCategories.length > 0) {
+          const grandCategoryIds = subCategory.grandCategories.map(
+            (grandCat) => grandCat._id
+          );
+
+          filterCriteria.categoryModel = "GrandCategory";
+          filterCriteria.category = { $in: grandCategoryIds };
+
+          products = await Product.find(filterCriteria)
+            .skip((page - 1) * limit)
+            .limit(limit);
+        }
+      }
+
+      const productsWithCampaign = await Promise.all(
+        products.map(async (product) => {
+          const engagement = await Engagement.findOne({
+            productId: product._id,
+          }).populate("campaignId");
+
+          if (engagement) {
+            const campaign = engagement.campaignId;
+            const isValidCampaign =
+              campaign &&
+              campaign.isActive &&
+              new Date() < new Date(campaign.expiryTime);
+
+            if (isValidCampaign) {
+              product.campaign = {
+                saleType: campaign.saleType,
+                expiryTime: campaign.expiryTime,
+                discountPercentage: campaign.discountPercentage,
+              };
+            }
+          }
+
+          const defaultImage = product.media.images.find(
+            (image) => image.default
+          );
+          const secondImage = product.media.images[1];
+
+          return {
+            _id: product._id,
+            title: product.title,
+            price: product.price,
+            category: product.category,
+            defaultImage: defaultImage ? defaultImage.url : null,
+            secondImage: secondImage ? secondImage.url : null,
+            colors: product.colors?.details || [],
+            size: product.size || [],
+            materials: product.materials || [],
+            tags: product.tags || [],
+            campaign: product.campaign,
+          };
+        })
+      );
+
+      return productsWithCampaign;
+    } catch (error) {
+      console.error("Error fetching filtered products by subcategory:", error);
+      throw new Error("Error fetching filtered products by subcategory");
+    }
+  }
+
   async getProductsByGrandCategory(grandCategoryId, page = 1, limit = 2) {
     try {
       const skip = (page - 1) * limit;
