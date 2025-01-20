@@ -10,5 +10,9 @@ router.get(
   "/v1/related-products/:productId",
   algorithmController.getRelatedProducts
 );
+router.get(
+  "/v1/grandcategory/:grandCategoryId",
+  algorithmController.getProductsByGrandCategory
+);
 
 module.exports = router;

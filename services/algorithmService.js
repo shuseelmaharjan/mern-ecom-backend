@@ -156,6 +156,57 @@ class AlgorithmService {
       throw error;
     }
   }
+
+  async getProductsByGrandCategory(grandCategoryId, page = 1, limit = 2) {
+    try {
+      const skip = (page - 1) * limit;
+
+      const products = await Product.find({
+        categoryModel: "GrandCategory",
+        category: grandCategoryId,
+        active: true,
+      })
+        .skip(skip)
+        .limit(limit);
+
+      const result = [];
+      for (const product of products) {
+        let productDetails = {
+          productId: product._id,
+          title: product.title,
+          media: product.media.images,
+          price: product.price,
+          brand: product.brand,
+          views: product.views,
+        };
+
+        const engagement = await Engagement.findOne({
+          productId: product._id,
+        });
+
+        if (engagement) {
+          const campaign = await Campaign.findOne({
+            _id: engagement.campaignId,
+            isActive: true,
+          });
+
+          if (campaign) {
+            productDetails.campaign = {
+              saleType: campaign.saleType,
+              expiryTime: campaign.expiryTime,
+              discountPercentage: campaign.discountPercentage,
+            };
+          }
+        }
+
+        result.push(productDetails);
+      }
+
+      return result;
+    } catch (error) {
+      throw new Error("Error fetching products: " + error.message);
+    }
+  }
 }
 
 module.exports = new AlgorithmService();
