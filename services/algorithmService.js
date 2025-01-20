@@ -429,6 +429,99 @@ class AlgorithmService {
     }
   }
 
+  async getFilteredProductsByGrandCategory(
+    grandCategoryId,
+    filters,
+    page = 1,
+    limit = 2
+  ) {
+    try {
+      const skip = (page - 1) * limit;
+
+      // Initialize the filter criteria
+      const filterCriteria = {
+        categoryModel: "GrandCategory",
+        category: grandCategoryId,
+        active: true,
+      };
+
+      // Apply additional filters
+      if (filters.size && filters.size.length > 0) {
+        filterCriteria.size = { $in: filters.size };
+      }
+
+      if (filters.brand) {
+        filterCriteria.brand = filters.brand;
+      }
+
+      if (filters.price) {
+        const [minPrice, maxPrice] = filters.price.split("-");
+        filterCriteria.price = { $gte: minPrice, $lte: maxPrice };
+      }
+
+      if (filters.tags && filters.tags.length > 0) {
+        filterCriteria.tags = { $in: filters.tags };
+      }
+
+      if (filters.materials && filters.materials.length > 0) {
+        filterCriteria.materials = { $in: filters.materials };
+      }
+
+      // Fetch filtered products
+      const products = await Product.find(filterCriteria)
+        .skip(skip)
+        .limit(limit);
+
+      const result = [];
+      for (const product of products) {
+        let productDetails = {
+          productId: product._id,
+          title: product.title,
+          price: product.price,
+          brand: product.brand,
+          views: product.views,
+          colors: product.colors?.details || [],
+          size: product.size || [],
+          materials: product.materials || [],
+          tags: product.tags || [],
+        };
+
+        const defaultImage = product.media.images.find(
+          (image) => image.default
+        );
+        const secondImage = product.media.images[1];
+
+        productDetails.defaultImage = defaultImage ? defaultImage.url : null;
+        productDetails.secondImage = secondImage ? secondImage.url : null;
+
+        const engagement = await Engagement.findOne({ productId: product._id });
+
+        if (engagement) {
+          const campaign = await Campaign.findOne({
+            _id: engagement.campaignId,
+            isActive: true,
+          });
+
+          if (campaign) {
+            productDetails.campaign = {
+              saleType: campaign.saleType,
+              expiryTime: campaign.expiryTime,
+              discountPercentage: campaign.discountPercentage,
+            };
+          }
+        }
+
+        result.push(productDetails);
+      }
+
+      return result;
+    } catch (error) {
+      throw new Error(
+        "Error fetching filtered products by grand category: " + error.message
+      );
+    }
+  }
+
   async getProductsByCategory(categoryId, page = 1, limit = 2) {
     try {
       const category = await Category.findById(categoryId);

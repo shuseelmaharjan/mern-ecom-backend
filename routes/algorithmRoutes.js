@@ -27,6 +27,11 @@ router.get(
 );
 
 router.get(
+  "/v1/grandcategory-filter/:grandCategoryId",
+  algorithmController.getFilteredProductsByGrandCategory
+);
+
+router.get(
   "/v1/product-category/:categoryId",
   algorithmController.getProductsByCategory
 );
