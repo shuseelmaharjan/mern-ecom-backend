@@ -313,6 +313,115 @@ class AlgorithmService {
       throw new Error("Error fetching products: " + error.message);
     }
   }
+
+  async getProductsByCategory(categoryId, page = 1, limit = 2) {
+    try {
+      // Find the category by ID
+      const category = await Category.findById(categoryId);
+
+      if (!category) {
+        throw new Error("Category not found for the provided category ID");
+      }
+
+      // First, try to find directly linked products for the category
+      let products = await Product.find({
+        categoryModel: "Category",
+        category: categoryId,
+        active: true,
+      })
+        .skip((page - 1) * limit)
+        .limit(limit);
+
+      if (products.length === 0) {
+        // If no products found in the category, check in subcategories
+        if (category.subCategories.length > 0) {
+          const subCategoryIds = category.subCategories.map(
+            (subCategory) => subCategory._id
+          );
+          products = await Product.find({
+            categoryModel: "SubCategory",
+            category: { $in: subCategoryIds },
+            active: true,
+          })
+            .skip((page - 1) * limit)
+            .limit(limit);
+        }
+      }
+
+      if (products.length === 0) {
+        // If no products found in subcategories, check in grandcategories
+        if (category.subCategories.length > 0) {
+          const grandCategoryIds = category.subCategories
+            .map((subCategory) => subCategory.grandCategories)
+            .flat()
+            .map((grandCategory) => grandCategory._id);
+
+          products = await Product.find({
+            categoryModel: "GrandCategory",
+            category: { $in: grandCategoryIds },
+            active: true,
+          })
+            .skip((page - 1) * limit)
+            .limit(limit);
+        }
+      }
+
+      // Map products and add campaign details
+      const productsWithCampaign = await Promise.all(
+        products.map(async (product) => {
+          const engagement = await Engagement.findOne({
+            productId: product._id,
+          }).populate("campaignId");
+
+          if (engagement) {
+            const campaign = engagement.campaignId;
+            const isValidCampaign =
+              campaign &&
+              campaign.isActive &&
+              new Date() < new Date(campaign.expiryTime);
+
+            if (isValidCampaign) {
+              product.campaign = {
+                saleType: campaign.saleType,
+                expiryTime: campaign.expiryTime,
+                discountPercentage: campaign.discountPercentage,
+              };
+            }
+          }
+
+          // Get the default image (where default is true)
+          const defaultImage = product.media.images.find(
+            (image) => image.default
+          );
+
+          // Get the second image (index 1)
+          const secondImage = product.media.images[1];
+
+          // Prepare the product details
+          const productDetails = {
+            _id: product._id,
+            title: product.title,
+            price: product.price,
+            category: product.category,
+            defaultImage: defaultImage ? defaultImage.url : null,
+            secondImage: secondImage ? secondImage.url : null, // Second image
+            colors: product.colors?.details || [], // Color details
+            size: product.size || [], // Size details
+            materials: product.materials || [], // Materials details
+            tags: product.tags || [], // Tags details
+            campaign: product.campaign,
+          };
+
+          return productDetails;
+        })
+      );
+
+      return productsWithCampaign;
+    } catch (error) {
+      console.error("Error fetching products for the category:", error);
+      throw new Error("Error fetching products for the category");
+    }
+  }
 }
 
 module.exports = new AlgorithmService();

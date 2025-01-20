@@ -103,6 +103,22 @@ class AlgorithmController {
       });
     }
   }
+
+  async getProductsByCategory(req, res) {
+    const { categoryId } = req.params;
+    const { page = 1, limit = 2 } = req.query;
+
+    try {
+      const products = await algorithmService.getProductsByCategory(
+        categoryId,
+        parseInt(page),
+        parseInt(limit)
+      );
+      res.json(products);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
 }
 
 module.exports = new AlgorithmController();
