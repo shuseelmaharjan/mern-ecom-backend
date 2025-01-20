@@ -25,5 +25,9 @@ router.get(
   "/v1/product-category/:categoryId",
   algorithmController.getProductsByCategory
 );
+router.get(
+  "/v1/category-filter/:categoryId",
+  algorithmController.getFilteredProducts
+);
 
 module.exports = router;

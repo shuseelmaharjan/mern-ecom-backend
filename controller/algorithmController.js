@@ -119,6 +119,25 @@ class AlgorithmController {
       res.status(500).json({ error: error.message });
     }
   }
+
+  async getFilteredProducts(req, res) {
+    const { categoryId } = req.params;
+    const { page = 1, limit = 2 } = req.query;
+    const filters = req.query;
+
+    try {
+      const filteredProducts =
+        await algorithmService.getFilteredProductsByCategory(
+          categoryId,
+          filters,
+          parseInt(page),
+          parseInt(limit)
+        );
+      res.json(filteredProducts);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
 }
 
 module.exports = new AlgorithmController();
