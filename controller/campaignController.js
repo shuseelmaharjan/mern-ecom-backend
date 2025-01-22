@@ -18,14 +18,16 @@ class CampaignController {
       }
 
       const data = req.body;
+      console.log("Received campaign data:", data);
+
       const campaign = await CampaignService.createCampaign(data, performedBy);
       res.status(201).json({
         message: "Campaign created successfully!",
         campaignId: campaign._id,
       });
     } catch (error) {
+      console.error("Error creating campaign:", error);
       res.status(400).json({ error: error.message });
-      console.log(error);
     }
   }
 

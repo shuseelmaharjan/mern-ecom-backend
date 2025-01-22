@@ -3,8 +3,8 @@ const mongoose = require("mongoose");
 const campaignSchema = new mongoose.Schema({
   saleType: {
     type: String,
-    enum: ["SALE", "QUICKSALE", "FESTIVAL", "FREESHIPPING"],
-    required: true,
+    enum: ["SALE", "BRAND", "FESTIVAL", "FREESHIPPING"],
+    required: false,
   },
   title: {
     type: String,
@@ -24,7 +24,15 @@ const campaignSchema = new mongoose.Schema({
   },
   image: {
     type: String,
-    required: true,
+    required: false,
+  },
+  banner: {
+    type: String,
+    required: false,
+  },
+  poster: {
+    type: String,
+    required: false,
   },
   isActive: {
     type: Boolean,
@@ -34,22 +42,10 @@ const campaignSchema = new mongoose.Schema({
     type: Number,
     default: null,
   },
-  targetAudience: {
-    type: Object,
-    default: null,
-  },
-  minimumOrderValue: {
-    type: Number,
-    default: null,
-  },
   priority: {
     type: String,
-    enum: ["BANNER", "FLASHSALE", "HOME"],
+    enum: ["HEADER", "BANNER", "DEAL", "HOME"],
     required: true,
-  },
-  isHeader: {
-    type: Boolean,
-    default: false,
   },
   totalVisits: {
     type: Number,

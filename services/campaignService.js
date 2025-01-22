@@ -11,9 +11,9 @@ class CampaignService {
         startTime,
         expiryTime,
         image = null,
+        banner = null,
+        poster = null,
         discountPercentage = null,
-        minimumOrderValue = null,
-        isHeader = false,
         priority,
       } = data;
 
@@ -24,9 +24,9 @@ class CampaignService {
         startTime,
         expiryTime,
         image,
+        banner,
+        poster,
         discountPercentage,
-        minimumOrderValue,
-        isHeader,
         priority,
         totalVisits: 0,
         totalSales: 0,

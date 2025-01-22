@@ -1,16 +1,24 @@
 const express = require("express");
 const CampaignController = require("../controller/campaignController");
 
-const { upload, processImage } = require("../middleware/bannerProcessor");
+const {
+  upload,
+  processImages,
+} = require("../middleware/campaignImageProcessor");
 
 const router = express.Router();
 
 router.post(
   "/v1/create-campaign",
-  upload.single("image"),
-  processImage,
+  upload.fields([
+    { name: "image", maxCount: 1 },
+    { name: "banner", maxCount: 1 },
+    { name: "poster", maxCount: 1 },
+  ]),
+  processImages,
   CampaignController.createCampaign
 );
+
 router.get("/v1/campaigns/active", CampaignController.getActiveCampaigns);
 router.get("/v1/campaigns/upcoming", CampaignController.getUpcomingCampaigns);
 router.get(
@@ -21,7 +29,7 @@ router.get(
 router.put(
   "/v1/update-campaign/:campaignId",
   upload.single("image"),
-  processImage,
+  processImages,
   CampaignController.updateCampaign
 );
 
