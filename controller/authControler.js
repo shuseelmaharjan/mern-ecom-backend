@@ -8,15 +8,19 @@ const jwt = require("jsonwebtoken");
 // @access Public
 const signup = asyncHandler(async (req, res) => {
   try {
+    console.log("Request:", req.body);
     const { name, email, password } = req.body;
     const hashPassword = await bcrypt.hash(password, 10);
+    // console.log("password", hashPassword);
     const newUser = new User({
       name,
       email,
       password: hashPassword,
       isUser: true,
     });
+    // console.log("new user", newUser);
     const saveUser = await newUser.save();
+    console.log("Saved", saveUser);
 
     res
       .status(200)
@@ -84,10 +88,12 @@ const login = asyncHandler(async (req, res) => {
     process.env.REFRESH_TOKEN_SECRET
   );
 
+  const isProduction = process.env.NODE_ENV === "production";
+
   res.cookie("_r", refreshToken, {
-    httpOnly: false,
-    secure: false,
-    sameSite: "Lax",
+    httpOnly: isProduction ? true : false,
+    secure: isProduction ? true : false,
+    sameSite: isProduction ? "Strict" : "Lax",
     expires: new Date(Date.now() + 604800000),
   });
 

@@ -64,7 +64,7 @@ const server = http.createServer(app);
 
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: process.env.CORS_ORIGIN,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   },
 });
@@ -104,9 +104,9 @@ app.use(csrfProtection);
 app.get("/csrf-token", (req, res) => {
   const csrfToken = req.csrfToken();
   res.cookie("_csrf", csrfToken, {
-    httpOnly: false,
-    secure: false,
-    sameSite: "Lax",
+    httpOnly: isProduction ? true : false,
+    secure: isProduction ? true : false,
+    sameSite: isProduction ? "Strict" : "Lax",
     expires: new Date(Date.now() + 604800000),
   });
   res.status(200).json({ message: "CSRF token set in header and cookie" });

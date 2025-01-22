@@ -19,7 +19,7 @@ const shippingAddressSchema = mongoose.Schema({
 });
 
 const employeeSchema = mongoose.Schema({
-  employeeId: { type: String, required: false, unique: true },
+  employeeId: { type: String, required: false, unique: false },
   designation: { type: String, required: true },
   dateOfJoining: { type: Date, default: Date.now },
   salary: { type: Number, required: true },
