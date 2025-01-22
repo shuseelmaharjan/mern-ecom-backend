@@ -64,7 +64,7 @@ const server = http.createServer(app);
 
 const io = socketIo(server, {
   cors: {
-    origin: process.env.CORS_ORIGIN,
+    origin: "http://localhost:3000",
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   },
 });
@@ -102,6 +102,8 @@ app.get("/banner/:date/:imageName", (req, res) => {
 // CSRF Protection
 app.use(csrfProtection);
 app.get("/csrf-token", (req, res) => {
+  const isProduction = process.env.NODE_ENV === "production";
+
   const csrfToken = req.csrfToken();
   res.cookie("_csrf", csrfToken, {
     httpOnly: isProduction ? true : false,
