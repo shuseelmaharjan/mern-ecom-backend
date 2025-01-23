@@ -46,5 +46,8 @@ router.get(
 //user portal
 router.get("/v1/banner-campaigns", CampaignController.getBannerForHomepage);
 router.get("/v1/header-campaigns", CampaignController.getHeaderCampaign);
+router.get("/v1/today-deal", CampaignController.getDeal);
+
+router.get("/v1/campaign-status", CampaignController.activeCampaignDetails);
 
 module.exports = router;

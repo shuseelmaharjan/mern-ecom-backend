@@ -32,4 +32,6 @@ router.get(
 
 router.post("/v1/products-costing", productController.getProductsCosting);
 
+router.get("/v1/todays-deal", productController.todaysDealProducts);
+
 module.exports = router;

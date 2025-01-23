@@ -222,7 +222,7 @@ class CampaignService {
   }
 
   async getSpecificSaleDetails(saleType) {
-    const validSaleTypes = ["SALE", "QUICKSALE", "FESTIVAL", "FREESHIPPING"];
+    const validSaleTypes = ["SALE", "BRAND", "FESTIVAL", "FREESHIPPING"];
 
     if (!validSaleTypes.includes(saleType.toUpperCase())) {
       throw new Error("Invalid saleType");
@@ -233,13 +233,13 @@ class CampaignService {
       saleType: saleType.toUpperCase(),
     });
   }
+
   async getBannerForHomepage() {
     try {
       const campaigns = await Campaign.find({
         priority: "BANNER",
-        isHeader: false,
         isActive: true,
-      }).select("title description image discountPercentage");
+      }).select("title description banner discountPercentage");
       return campaigns;
     } catch (error) {
       throw new Error("Error fetching campaigns: " + error.message);
@@ -249,12 +249,82 @@ class CampaignService {
   async getHeaderCampaign() {
     try {
       const campaigns = await Campaign.find({
-        isHeader: true,
+        priority: "HEADER",
         isActive: true,
-      }).select("title description image discountPercentage");
+      }).select("title description banner discountPercentage");
       return campaigns;
     } catch (error) {
       throw new Error("Error fetching campaigns: " + error.message);
+    }
+  }
+
+  async getDeal() {
+    try {
+      const campaigns = await Campaign.find({
+        priority: "DEAL",
+        isActive: true,
+      }).select("title description image poster discountPercentage");
+      return campaigns;
+    } catch (error) {
+      throw new Error("Error fetching campaigns: " + error.message);
+    }
+  }
+
+  async activeCampaignDetails() {
+    try {
+      const isHeaderActive = !!(await Campaign.findOne({
+        priority: "HEADER",
+        isActive: true,
+      }));
+      const isBannerActive = !!(await Campaign.findOne({
+        priority: "BANNER",
+        isActive: true,
+      }));
+      const isDealActive = !!(await Campaign.findOne({
+        priority: "DEAL",
+        isActive: true,
+      }));
+      const isHomeActive = !!(await Campaign.findOne({
+        priority: "HOME",
+        isActive: true,
+      }));
+
+      let homeSaleTypes = null;
+      if (isHomeActive) {
+        homeSaleTypes = {
+          SALE: !!(await Campaign.findOne({
+            priority: "HOME",
+            isActive: true,
+            saleType: "SALE",
+          })),
+          BRAND: !!(await Campaign.findOne({
+            priority: "HOME",
+            isActive: true,
+            saleType: "BRAND",
+          })),
+          FESTIVAL: !!(await Campaign.findOne({
+            priority: "HOME",
+            isActive: true,
+            saleType: "FESTIVAL",
+          })),
+          FREESHIPPING: !!(await Campaign.findOne({
+            priority: "HOME",
+            isActive: true,
+            saleType: "FREESHIPPING",
+          })),
+        };
+      }
+
+      return {
+        isHeaderActive,
+        isBannerActive,
+        isDealActive,
+        isHomeActive,
+        homeSaleTypes,
+      };
+    } catch (error) {
+      console.error("Error in CampaignService:", error.message);
+      throw new Error("Error retrieving campaign status.");
     }
   }
 }

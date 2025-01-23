@@ -174,6 +174,33 @@ class CampaignController {
       });
     }
   }
+
+  async getDeal(req, res) {
+    try {
+      const campaigns = await CampaignService.getDeal();
+      res.status(200).json({
+        success: true,
+        message: "Banner campaigns fetched successfully",
+        data: campaigns,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: "Error fetching banner campaigns",
+        error: error.message,
+      });
+    }
+  }
+
+  async activeCampaignDetails(req, res) {
+    try {
+      const campaignData = await CampaignService.activeCampaignDetails();
+      res.status(200).json(campaignData);
+    } catch (error) {
+      console.error("Error in CampaignController:", error.message);
+      res.status(500).json({ error: error.message });
+    }
+  }
 }
 
 module.exports = new CampaignController();

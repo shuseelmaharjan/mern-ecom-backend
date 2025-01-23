@@ -134,6 +134,15 @@ class ProductController {
         .json({ error: "An error occurred while calculating product costs." });
     }
   }
+
+  async todaysDealProducts(req, res) {
+    try {
+      const products = await productService.getTodaysDeals();
+      res.status(200).json(products);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch engaged products." });
+    }
+  }
 }
 
 module.exports = new ProductController();

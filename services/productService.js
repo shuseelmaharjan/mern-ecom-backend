@@ -522,6 +522,99 @@ class ProductService {
       throw new Error(error.message);
     }
   }
+
+  async getTodaysDeals() {
+    try {
+      const result = await Product.aggregate([
+        {
+          $lookup: {
+            from: "engagements",
+            localField: "_id",
+            foreignField: "productId",
+            as: "engagements",
+          },
+        },
+        {
+          $unwind: "$engagements",
+        },
+        {
+          $lookup: {
+            from: "campaigns",
+            localField: "engagements.campaignId",
+            foreignField: "_id",
+            as: "campaign",
+          },
+        },
+        {
+          $unwind: "$campaign",
+        },
+        {
+          $match: {
+            "engagements.expiryTime": { $gte: new Date() },
+            "campaign.isActive": true,
+          },
+        },
+        {
+          $addFields: {
+            defaultImage: {
+              $arrayElemAt: [
+                {
+                  $filter: {
+                    input: "$media.images",
+                    as: "image",
+                    cond: { $eq: ["$$image.default", true] },
+                  },
+                },
+                0,
+              ],
+            },
+            secondImage: {
+              $arrayElemAt: ["$media.images", 1],
+            },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              campaignId: "$campaign._id",
+              campaignName: "$campaign.title",
+              campaignEndTime: "$campaign.expiryTime",
+              poster: "$campaign.poster", // Include poster in the grouping
+            },
+            products: {
+              $push: {
+                _id: "$_id",
+                title: "$title",
+                media: {
+                  defaultImage: "$defaultImage.url",
+                  secondImage: "$secondImage.url",
+                },
+                price: "$price",
+                quantity: "$quantity",
+                brand: "$brand",
+                active: "$active",
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            campaignId: "$_id.campaignId",
+            campaignName: "$_id.campaignName",
+            campaignEndTime: "$_id.campaignEndTime",
+            poster: "$_id.poster",
+            products: 1,
+          },
+        },
+      ]);
+
+      return result;
+    } catch (error) {
+      console.error("Error fetching today's deals:", error);
+      throw error;
+    }
+  }
 }
 
 module.exports = new ProductService();
