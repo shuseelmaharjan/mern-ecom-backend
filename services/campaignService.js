@@ -151,6 +151,7 @@ class CampaignService {
   }
 
   async updateCampaign(campaignId, updateData, performedBy) {
+    // console.log(updateData);
     try {
       const allowedFields = [
         "title",
@@ -160,7 +161,9 @@ class CampaignService {
         "expiryTime",
         "discountPercentage",
         "priority",
-        "showOnHeader",
+        "image",
+        "banner",
+        "poster",
       ];
 
       const filteredData = {};

@@ -28,7 +28,11 @@ router.get(
 
 router.put(
   "/v1/update-campaign/:campaignId",
-  upload.single("image"),
+  upload.fields([
+    { name: "image", maxCount: 1 },
+    { name: "banner", maxCount: 1 },
+    { name: "poster", maxCount: 1 },
+  ]),
   processImages,
   CampaignController.updateCampaign
 );

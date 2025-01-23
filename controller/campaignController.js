@@ -61,13 +61,15 @@ class CampaignController {
 
   async updateCampaign(req, res) {
     try {
-      console.log("Request Body:", req.body);
-
       const roleChecker = new RoleChecker(req);
       const userIdHelper = new GetUserId(req);
 
       const role = await roleChecker.getRole();
       const performedBy = await userIdHelper.getUserId();
+
+      if (!role || !performedBy) {
+        throw new Error("Failed to retrieve role or user ID.");
+      }
 
       if (role !== "mm") {
         return res
@@ -76,7 +78,8 @@ class CampaignController {
       }
 
       const { campaignId } = req.params;
-      const updateData = req.body;
+
+      const updateData = { ...req.body };
 
       const updatedCampaign = await CampaignService.updateCampaign(
         campaignId,
@@ -89,8 +92,8 @@ class CampaignController {
         data: updatedCampaign,
       });
     } catch (error) {
+      console.error("Error updating campaign:", error.message, error.stack);
       res.status(400).json({ error: error.message });
-      console.error("Error updating campaign:", error);
     }
   }
 
