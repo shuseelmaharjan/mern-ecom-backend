@@ -44,5 +44,10 @@ router.get(
   "/v1/category/:categoryId/filter-attributes",
   algorithmController.getCategoryAttributes
 );
+router.get(
+  "/v1/freeshipping-products",
+  algorithmController.getFreeShippingProducts
+);
+router.get("/v1/festival-products", algorithmController.getFestivalProducts);
 
 module.exports = router;

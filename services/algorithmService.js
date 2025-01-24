@@ -4,19 +4,20 @@ const Product = require("../models/product");
 const { Category } = require("../models/categories");
 
 class AlgorithmService {
-  //for flash sale product items service 1
   async getFlashSaleProducts() {
     try {
       const flashSaleCampaigns = await Campaign.find({
         isActive: true,
-        priority: "FLASHSALE",
-      }).select("_id discountPercentage");
+        priority: "HOME",
+        saleType: "SALE",
+      }).select(
+        "_id title startTime expiryTime image poster discountPercentage"
+      );
 
       if (flashSaleCampaigns.length === 0) {
         throw new Error("No active FLASHSALE campaigns found");
       }
 
-      //Find products engaged in these campaigns
       const campaignIds = flashSaleCampaigns.map((campaign) => campaign._id);
       const engagedProducts = await Engagement.find({
         campaignId: { $in: campaignIds },
@@ -41,22 +42,208 @@ class AlgorithmService {
         throw new Error("No active products found");
       }
 
-      const productsWithDiscount = products.map((product) => {
+      const campaign = flashSaleCampaigns[0];
+
+      const productsList = products.map((product) => {
         const productEngagement = engagedProducts.find(
           (engagement) =>
             engagement.productId.toString() === product._id.toString()
         );
-        const campaign = flashSaleCampaigns.find(
-          (campaign) =>
-            campaign._id.toString() === productEngagement.campaignId.toString()
+
+        const defaultImage = product.media?.images.find(
+          (image) => image.default
         );
+        const secondImage = product.media?.images[1];
+
         return {
-          ...product.toObject(),
-          discountPercentage: campaign ? campaign.discountPercentage : 0,
+          product: {
+            id: product._id,
+            title: product.title,
+            defaultImage: defaultImage ? defaultImage.url : null,
+            secondImage: secondImage ? secondImage.url : null,
+            price: product.price,
+            quantity: product.quantity,
+            brand: product.brand,
+            discountPercentage: campaign.discountPercentage,
+          },
         };
       });
 
-      return productsWithDiscount;
+      return {
+        campaign: {
+          _id: campaign._id,
+          title: campaign.title,
+          startTime: campaign.startTime,
+          expiryTime: campaign.expiryTime,
+          image: campaign.image,
+          poster: campaign.poster,
+          discountPercentage: campaign.discountPercentage,
+        },
+        products: productsList,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getFreeShippingProducts() {
+    try {
+      const freeShippingCampaign = await Campaign.find({
+        isActive: true,
+        priority: "HOME",
+        saleType: "FREESHIPPING",
+      }).select(
+        "_id title startTime expiryTime image poster discountPercentage"
+      );
+
+      if (freeShippingCampaign.length === 0) {
+        throw new Error("No active Free Shipping campaigns found");
+      }
+
+      const campaignIds = freeShippingCampaign.map((campaign) => campaign._id);
+      const engagedProducts = await Engagement.find({
+        campaignId: { $in: campaignIds },
+      }).select("productId campaignId");
+
+      if (engagedProducts.length === 0) {
+        throw new Error("No products found for Free Shipping campaigns");
+      }
+
+      const productIds = engagedProducts.map(
+        (engagement) => engagement.productId
+      );
+
+      const products = await Product.find({
+        _id: { $in: productIds },
+        active: true,
+      }).sort({
+        views: -1,
+      });
+
+      if (products.length === 0) {
+        throw new Error("No active products found");
+      }
+
+      const campaign = freeShippingCampaign[0];
+
+      const productsList = products.map((product) => {
+        const productEngagement = engagedProducts.find(
+          (engagement) =>
+            engagement.productId.toString() === product._id.toString()
+        );
+
+        const defaultImage = product.media?.images.find(
+          (image) => image.default
+        );
+        const secondImage = product.media?.images[1];
+
+        return {
+          product: {
+            id: product._id,
+            title: product.title,
+            defaultImage: defaultImage ? defaultImage.url : null,
+            secondImage: secondImage ? secondImage.url : null,
+            price: product.price,
+            quantity: product.quantity,
+            brand: product.brand,
+            discountPercentage: campaign.discountPercentage,
+          },
+        };
+      });
+
+      return {
+        campaign: {
+          _id: campaign._id,
+          title: campaign.title,
+          startTime: campaign.startTime,
+          expiryTime: campaign.expiryTime,
+          image: campaign.image,
+          poster: campaign.poster,
+        },
+        products: productsList,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getFestivalProducts() {
+    try {
+      const festivalSaleCampaign = await Campaign.find({
+        isActive: true,
+        priority: "HOME",
+        saleType: "FESTIVAL",
+      }).select(
+        "_id title startTime expiryTime image poster discountPercentage"
+      );
+
+      if (festivalSaleCampaign.length === 0) {
+        throw new Error("No active Festival campaigns found");
+      }
+
+      const campaignIds = festivalSaleCampaign.map((campaign) => campaign._id);
+      const engagedProducts = await Engagement.find({
+        campaignId: { $in: campaignIds },
+      }).select("productId campaignId");
+
+      if (engagedProducts.length === 0) {
+        throw new Error("No products found for Festival campaigns");
+      }
+
+      const productIds = engagedProducts.map(
+        (engagement) => engagement.productId
+      );
+
+      const products = await Product.find({
+        _id: { $in: productIds },
+        active: true,
+      }).sort({
+        views: -1,
+      });
+
+      if (products.length === 0) {
+        throw new Error("No active products found");
+      }
+
+      const campaign = festivalSaleCampaign[0];
+
+      const productsList = products.map((product) => {
+        const productEngagement = engagedProducts.find(
+          (engagement) =>
+            engagement.productId.toString() === product._id.toString()
+        );
+
+        const defaultImage = product.media?.images.find(
+          (image) => image.default
+        );
+        const secondImage = product.media?.images[1];
+
+        return {
+          product: {
+            id: product._id,
+            title: product.title,
+            defaultImage: defaultImage ? defaultImage.url : null,
+            secondImage: secondImage ? secondImage.url : null,
+            price: product.price,
+            quantity: product.quantity,
+            brand: product.brand,
+            discountPercentage: campaign.discountPercentage,
+          },
+        };
+      });
+
+      return {
+        campaign: {
+          _id: campaign._id,
+          title: campaign.title,
+          startTime: campaign.startTime,
+          expiryTime: campaign.expiryTime,
+          image: campaign.image,
+          poster: campaign.poster,
+          discountPercentage: campaign.discountPercentage,
+        },
+        products: productsList,
+      };
     } catch (error) {
       throw error;
     }

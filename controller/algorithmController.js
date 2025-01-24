@@ -209,6 +209,24 @@ class AlgorithmController {
       res.status(500).json({ message: error.message });
     }
   }
+
+  async getFreeShippingProducts(req, res) {
+    try {
+      const products = await algorithmService.getFreeShippingProducts();
+      res.status(200).json({ products });
+    } catch (error) {
+      res.status(500).json({ message: "Server Error", error: error.message });
+    }
+  }
+
+  async getFestivalProducts(req, res) {
+    try {
+      const products = await algorithmService.getFestivalProducts();
+      res.status(200).json({ products });
+    } catch (error) {
+      res.status(500).json({ message: "Server Error", error: error.message });
+    }
+  }
 }
 
 module.exports = new AlgorithmController();

@@ -552,6 +552,7 @@ class ProductService {
           $match: {
             "engagements.expiryTime": { $gte: new Date() },
             "campaign.isActive": true,
+            "campaign.priority": "DEAL",
           },
         },
         {
@@ -579,7 +580,7 @@ class ProductService {
               campaignId: "$campaign._id",
               campaignName: "$campaign.title",
               campaignEndTime: "$campaign.expiryTime",
-              poster: "$campaign.poster", // Include poster in the grouping
+              poster: "$campaign.poster",
             },
             products: {
               $push: {
