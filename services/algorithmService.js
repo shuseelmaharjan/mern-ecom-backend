@@ -985,6 +985,49 @@ class AlgorithmService {
       throw new Error("Error fetching category attributes");
     }
   }
+
+  async getProductsByActiveCampaign(params) {
+    const {
+      campaignId,
+      limit = 5,
+      offset = 0,
+      minPrice,
+      maxPrice,
+      brand,
+      colors,
+      size,
+      sortBy,
+    } = params;
+
+    const campaign = await Campaign.findById(campaignId);
+    if (!campaign || !campaign.isActive) {
+      throw new Error("Invalid or inactive campaign");
+    }
+
+    const query = {
+      active: true,
+      "campaign._id": campaignId,
+    };
+
+    if (minPrice) query.price = { ...query.price, $gte: Number(minPrice) };
+    if (maxPrice) query.price = { ...query.price, $lte: Number(maxPrice) };
+    if (brand) query.brand = brand;
+    if (colors) query["colors.details.name"] = { $in: colors.split(",") };
+    if (size) query.size = { $in: size.split(",") };
+
+    let sortOption = {};
+    if (sortBy === "high_price") sortOption.price = -1;
+    else if (sortBy === "low_price") sortOption.price = 1;
+    else if (sortBy === "new_arrivals") sortOption.createdAt = -1;
+    else if (sortBy === "most_popular") sortOption.views = -1;
+
+    const products = await Product.find(query)
+      .sort(sortOption)
+      .skip(Number(offset))
+      .limit(Number(limit));
+
+    return products;
+  }
 }
 
 module.exports = new AlgorithmService();

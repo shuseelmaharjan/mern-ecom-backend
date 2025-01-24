@@ -227,6 +227,18 @@ class AlgorithmController {
       res.status(500).json({ message: "Server Error", error: error.message });
     }
   }
+
+  async suggestProducts(req, res) {
+    try {
+      const params = req.query;
+      const products = await algorithmService.getProductsByActiveCampaign(
+        params
+      );
+      return res.status(200).json({ success: true, data: products });
+    } catch (error) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+  }
 }
 
 module.exports = new AlgorithmController();
