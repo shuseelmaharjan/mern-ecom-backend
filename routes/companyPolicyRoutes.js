@@ -31,4 +31,10 @@ router.put(
   PolicyController.deactivateShippingPolicy
 );
 
+router.put(
+  "/v1/update-shipping-policy/:policyId",
+  verifyAdmin,
+  PolicyController.updateShippingPolicy
+);
+
 module.exports = router;

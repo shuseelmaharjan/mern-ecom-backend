@@ -33,7 +33,7 @@ const defaultShippingPolicySchema = new mongoose.Schema({
   shippingPolicyDescription: { type: String, required: true },
   isDefault: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true },
-  cod: { type: Number, default: 0, required: true },
+  costofDelivery: { type: Number, required: true },
   createdAt: { type: Date, default: Date.now },
   updatedDate: { type: Date, default: null },
 });

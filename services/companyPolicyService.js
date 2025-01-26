@@ -79,8 +79,9 @@ class PolicyService {
       shippingMethod,
       shippingDays,
       shippingPolicyDescription,
-      cod,
+      costofDelivery,
     } = data;
+
     const existingData = await CompanyShippingPolicy.findOne({
       shippingMethod,
       isActive: true,
@@ -89,13 +90,14 @@ class PolicyService {
       throw new Error("Shipping policy already exists");
     }
 
+    console.log(data);
     try {
       const newShippingPolicy = new CompanyShippingPolicy({
         shippingPolicyName,
         shippingMethod,
         shippingDays,
         shippingPolicyDescription,
-        cod,
+        costofDelivery,
       });
       await newShippingPolicy.save();
 
@@ -135,6 +137,46 @@ class PolicyService {
         performedBy: userId,
         performedAt: policyId,
         details: `Deleted shipping policy.`,
+      });
+
+      return policy;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  async updateShippingPolicy(policyId, userId, data) {
+    try {
+      const {
+        shippingPolicyName,
+        shippingMethod,
+        shippingDays,
+        shippingPolicyDescription,
+        costofDelivery,
+      } = data;
+      const policy = await CompanyShippingPolicy.findByIdAndUpdate(
+        policyId,
+        {
+          shippingPolicyName,
+          shippingMethod,
+          shippingDays,
+          shippingPolicyDescription,
+          costofDelivery,
+          updatedDate: Date.now(),
+        },
+        { new: true, runValidators: true }
+      );
+
+      if (!policy) {
+        throw new Error("Policy not found");
+      }
+
+      await CompanyShippingPolicyLog.create({
+        action: "UPDATE",
+        modelAffected: "CompanyShippingPolicy",
+        performedBy: userId,
+        performedAt: policyId,
+        details: `Updated shipping policy with name: ${shippingPolicyName} and description: ${shippingPolicyDescription}`,
       });
 
       return policy;

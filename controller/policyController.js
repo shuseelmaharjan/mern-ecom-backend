@@ -44,6 +44,7 @@ class PolicyController {
       res.status(201).json({ message: "Shipping created successfully" });
     } catch (error) {
       res.status(400).json({ message: error.message });
+      console.log(error);
     }
   }
 
@@ -67,6 +68,19 @@ class PolicyController {
 
       await policyService.deactivateShippingPolicy(policyID, id);
       res.status(200).json({ message: "Policy deleted successfully" });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+
+  async updateShippingPolicy(req, res) {
+    try {
+      const policyId = req.params.policyId;
+      const userId = new GetUserId(req);
+      const id = await userId.getUserId();
+
+      await policyService.updateShippingPolicy(policyId, id, req.body);
+      res.status(200).json({ message: "Policy updated successfully" });
     } catch (error) {
       res.status(400).json({ message: error.message });
     }
