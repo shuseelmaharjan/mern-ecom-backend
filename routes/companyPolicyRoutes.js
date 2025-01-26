@@ -25,4 +25,10 @@ router.post(
 
 router.get("/v1/get-shipping-policy", PolicyController.getShipping);
 
+router.put(
+  "/v1/deactivate-shipping-policy/:policyId",
+  verifyAdmin,
+  PolicyController.deactivateShippingPolicy
+);
+
 module.exports = router;

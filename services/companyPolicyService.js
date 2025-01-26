@@ -120,6 +120,28 @@ class PolicyService {
       throw new Error(error.message);
     }
   }
+
+  async deactivateShippingPolicy(policyId, userId) {
+    try {
+      const policy = await CompanyShippingPolicy.findByIdAndUpdate(
+        policyId,
+        { isActive: false, updatedDate: Date.now() },
+        { new: true, runValidators: true }
+      );
+
+      await CompanyShippingPolicyLog.create({
+        action: "DELETED",
+        modelAffected: "CompanyShippingPolicy",
+        performedBy: userId,
+        performedAt: policyId,
+        details: `Deleted shipping policy.`,
+      });
+
+      return policy;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
 }
 
 module.exports = new PolicyService();

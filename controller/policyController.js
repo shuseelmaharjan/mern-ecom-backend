@@ -52,12 +52,23 @@ class PolicyController {
       const policies = await policyService.getShippingPolicy();
       res.status(200).json(policies);
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          message: "Error fetching shipping policies",
-          error: error.message,
-        });
+      res.status(500).json({
+        message: "Error fetching shipping policies",
+        error: error.message,
+      });
+    }
+  }
+
+  async deactivateShippingPolicy(req, res) {
+    try {
+      const policyID = req.params.policyId;
+      const userId = new GetUserId(req);
+      const id = await userId.getUserId();
+
+      await policyService.deactivateShippingPolicy(policyID, id);
+      res.status(200).json({ message: "Policy deleted successfully" });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
     }
   }
 }
