@@ -35,6 +35,31 @@ class PolicyController {
       res.status(400).json({ message: error.message });
     }
   }
+
+  async createShipping(req, res) {
+    try {
+      const userId = new GetUserId(req);
+      const id = await userId.getUserId();
+      await policyService.createShippingPolicy(req.body, id);
+      res.status(201).json({ message: "Shipping created successfully" });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+
+  async getShipping(req, res) {
+    try {
+      const policies = await policyService.getShippingPolicy();
+      res.status(200).json(policies);
+    } catch (error) {
+      res
+        .status(500)
+        .json({
+          message: "Error fetching shipping policies",
+          error: error.message,
+        });
+    }
+  }
 }
 
 module.exports = new PolicyController();

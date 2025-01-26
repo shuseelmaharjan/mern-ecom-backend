@@ -17,4 +17,12 @@ router.put(
   PolicyController.updatePolicy
 );
 
+router.post(
+  "/v1/create-shipping-policy",
+  verifyAdmin,
+  PolicyController.createShipping
+);
+
+router.get("/v1/get-shipping-policy", PolicyController.getShipping);
+
 module.exports = router;

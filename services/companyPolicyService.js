@@ -1,4 +1,9 @@
-const { CompanyPolicy, CompanyPolicyLog } = require("../models/shop");
+const {
+  CompanyPolicy,
+  CompanyPolicyLog,
+  CompanyShippingPolicy,
+  CompanyShippingPolicyLog,
+} = require("../models/shop");
 
 class PolicyService {
   async createPolicy(data, userId) {
@@ -66,6 +71,54 @@ class PolicyService {
     });
 
     return policy;
+  }
+
+  async createShippingPolicy(data, userId) {
+    const {
+      shippingPolicyName,
+      shippingMethod,
+      shippingDays,
+      shippingPolicyDescription,
+      cod,
+    } = data;
+    const existingData = await CompanyShippingPolicy.findOne({
+      shippingMethod,
+      isActive: true,
+    });
+    if (existingData) {
+      throw new Error("Shipping policy already exists");
+    }
+
+    try {
+      const newShippingPolicy = new CompanyShippingPolicy({
+        shippingPolicyName,
+        shippingMethod,
+        shippingDays,
+        shippingPolicyDescription,
+        cod,
+      });
+      await newShippingPolicy.save();
+
+      await CompanyShippingPolicyLog.create({
+        action: "INSERT",
+        modelAffected: "CompanyShippingPolicy",
+        performedBy: userId,
+        performedAt: newShippingPolicy._id,
+        details: `Created shipping policy with name: ${shippingPolicyName}`,
+      });
+      return newShippingPolicy;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  async getShippingPolicy() {
+    try {
+      const policies = await CompanyShippingPolicy.find({ isActive: true });
+      return policies;
+    } catch (error) {
+      throw new Error(error.message);
+    }
   }
 }
 

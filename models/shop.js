@@ -28,45 +28,54 @@ const defaultPolicyLogSchema = new mongoose.Schema({
 
 const defaultShippingPolicySchema = new mongoose.Schema({
   shippingPolicyName: { type: String, required: true },
+  shippingMethod: { type: String, required: true },
+  shippingDays: { type: String, required: true },
   shippingPolicyDescription: { type: String, required: true },
+  isDefault: { type: Boolean, default: false },
+  isActive: { type: Boolean, default: true },
+  cod: { type: Number, default: 0, required: true },
+  createdAt: { type: Date, default: Date.now },
+  updatedDate: { type: Date, default: null },
 });
 
-const defaultShippingLogSchema = new mongoose.Schema(
-  {
-    action: { type: String, required: true },
-    field: { type: String, required: true },
-    previousValue: { type: String, default: null },
-    newValue: { type: String, required: true },
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Users",
-      required: true,
-    },
-    createdAt: { type: Date, default: Date.now },
+const defaultShippingLogSchema = new mongoose.Schema({
+  action: { type: String, required: true },
+  performedAt: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "CompanyShippingPolicy",
+    required: true,
   },
-  { versionKey: false }
-);
+  performedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Users",
+    required: true,
+  },
+  details: { type: String, required: true },
+  modelAffected: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+});
 
 const defaultReturnPolicySchema = new mongoose.Schema({
   returnPolicyName: { type: String, required: true },
   returnPolicyDescription: { type: String, required: true },
 });
 
-const defaultReturnPolicyLogSchema = new mongoose.Schema(
-  {
-    action: { type: String, required: true },
-    field: { type: String, required: true },
-    previousValue: { type: String, default: null },
-    newValue: { type: String, required: true },
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Users",
-      required: true,
-    },
-    createdAt: { type: Date, default: Date.now },
+const defaultReturnPolicyLogSchema = new mongoose.Schema({
+  action: { type: String, required: true },
+  performedAt: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "CompanyReturnPolicy",
+    required: true,
   },
-  { versionKey: false }
-);
+  performedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Users",
+    required: true,
+  },
+  details: { type: String, required: true },
+  modelAffected: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+});
 
 const ShopSchema = new mongoose.Schema({
   shopName: { type: String, required: true },
