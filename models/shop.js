@@ -56,15 +56,19 @@ const defaultShippingLogSchema = new mongoose.Schema({
 });
 
 const defaultReturnPolicySchema = new mongoose.Schema({
-  returnPolicyName: { type: String, required: true },
-  returnPolicyDescription: { type: String, required: true },
+  policyName: { type: String, required: true },
+  policyDescription: { type: String, required: true },
+  isDefault: { type: Boolean, default: true },
+  isActive: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now },
+  updatedDate: { type: Date, default: null },
 });
 
 const defaultReturnPolicyLogSchema = new mongoose.Schema({
   action: { type: String, required: true },
   performedAt: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "CompanyReturnPolicy",
+    ref: "CompanyShippingPolicy",
     required: true,
   },
   performedBy: {

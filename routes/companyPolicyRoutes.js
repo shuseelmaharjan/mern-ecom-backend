@@ -37,4 +37,18 @@ router.put(
   PolicyController.updateShippingPolicy
 );
 
+router.post(
+  "/v1/create-return-policy",
+  verifyAdmin,
+  PolicyController.createReturnPolicy
+);
+
+router.get("/v1/get-return-policy", PolicyController.getReturnPolicies);
+
+router.put(
+  "/v1/update-return-policy/:policyId",
+  verifyAdmin,
+  PolicyController.updateReturnPolicy
+);
+
 module.exports = router;

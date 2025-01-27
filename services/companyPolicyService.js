@@ -3,6 +3,8 @@ const {
   CompanyPolicyLog,
   CompanyShippingPolicy,
   CompanyShippingPolicyLog,
+  CompanyReturnPolicy,
+  CompanyReturnPolicyLog,
 } = require("../models/shop");
 
 class PolicyService {
@@ -183,6 +185,73 @@ class PolicyService {
     } catch (error) {
       throw new Error(error.message);
     }
+  }
+
+  async createReturnPolicy(data, userId) {
+    const { policyName, policyDescription } = data;
+    const existingData = await CompanyReturnPolicy.findOne({
+      policyName,
+      isActive: true,
+    });
+    if (existingData) {
+      throw new Error("Policy already exists");
+    }
+
+    try {
+      const newPolicy = new CompanyReturnPolicy({
+        policyName,
+        policyDescription,
+      });
+      await newPolicy.save();
+
+      await CompanyReturnPolicyLog.create({
+        action: "INSERT",
+        modelAffected: "CompanyReturnPolicy",
+        performedBy: userId,
+        performedAt: newPolicy._id,
+        details: `Created policy with name: ${policyName}`,
+      });
+      return newPolicy;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  async getReturnPolicies() {
+    try {
+      const policies = await CompanyReturnPolicy.find({ isActive: true });
+      return policies;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  async updateReturnPolicy(policyId, userId, data) {
+    const { policyName, policyDescription } = data;
+
+    const policy = await CompanyReturnPolicy.findByIdAndUpdate(
+      policyId,
+      {
+        policyName,
+        policyDescription,
+        updatedDate: Date.now(),
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!policy) {
+      throw new Error("Policy not found");
+    }
+
+    await CompanyReturnPolicyLog.create({
+      action: "UPDATE",
+      modelAffected: "CompanyReturnPolicy",
+      performedBy: userId,
+      performedAt: policyId,
+      details: `Updated policy with name: ${policyName} and description: ${policyDescription}`,
+    });
+
+    return policy;
   }
 }
 
