@@ -185,6 +185,44 @@ class ShopController {
       res.status(400).json({ error: error.message });
     }
   }
+
+  async createShopReturnPolicy(req, res) {
+    try {
+      const shopId = req.params.shopId;
+      const returnPolicy = req.body;
+
+      const result = await shopService.createShopReturnPolicy(
+        shopId,
+        returnPolicy
+      );
+      res.status(201).json(result);
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async getShopReturnPolicies(req, res) {
+    try {
+      const shopId = req.params.shopId;
+      const result = await shopService.getShopReturnPolicies(shopId);
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async deactivateShopReturnPolicy(req, res) {
+    const { policyId } = req.params;
+
+    try {
+      const updatedPolicy = await shopService.deactivateShopReturnPolicy(
+        policyId
+      );
+      res.status(200).json(updatedPolicy);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  }
 }
 
 module.exports = new ShopController();

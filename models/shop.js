@@ -109,16 +109,11 @@ const shopShippingPolicySchema = new mongoose.Schema({
 });
 
 const shopReturnPolicySchema = new mongoose.Schema({
-  returnPolicy: { type: String, required: true },
   shopId: { type: mongoose.Schema.Types.ObjectId, ref: "Shop", required: true },
-  defaultReturnPolicyId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "DefaultReturnPolicy",
-    required: true,
-  },
-  createdDate: { type: Date, default: Date.now },
-  updatedDate: { type: Date, default: null },
+  policyName: { type: String, required: true },
+  policyDescription: { type: String, required: true },
   isActive: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now },
 });
 
 const Shop = mongoose.models.Shop || mongoose.model("Shop", ShopSchema);

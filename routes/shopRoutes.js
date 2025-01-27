@@ -37,6 +37,23 @@ router.put(
   verifyAccessToken,
   shopController.deactivateShopShippingPolicy
 );
+
+router.post(
+  "/v1/create-shop-return-policy/:shopId",
+  verifyAccessToken,
+  shopController.createShopReturnPolicy
+);
+
+router.get(
+  "/v1/get-shop-return-policy/:shopId",
+  shopController.getShopReturnPolicies
+);
+
+router.put(
+  "/v1/deactivate-shop-return-policy/:policyId",
+  verifyAccessToken,
+  shopController.deactivateShopReturnPolicy
+);
 // Deactivate a shop (set isActive to false)
 router.put(
   "/v1/deactivate-shop/:id",

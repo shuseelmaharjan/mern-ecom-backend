@@ -1,4 +1,8 @@
-const { Shop, ShopShippingPolicy } = require("../models/shop");
+const {
+  Shop,
+  ShopShippingPolicy,
+  ShopReturnPolicy,
+} = require("../models/shop");
 const User = require("../models/users");
 
 class ShopService {
@@ -144,6 +148,44 @@ class ShopService {
       );
       if (!updatedPolicy) {
         throw new Error("Shipping Policy not found");
+      }
+      return updatedPolicy;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  async createShopReturnPolicy(shopId, policy) {
+    try {
+      const newPolicy = new ShopReturnPolicy({
+        shopId,
+        ...policy,
+      });
+      const savedPolicy = await newPolicy.save();
+      return savedPolicy;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  async getShopReturnPolicies(shopId) {
+    try {
+      const policies = await ShopReturnPolicy.find({ shopId, isActive: true });
+      return policies;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  async deactivateShopReturnPolicy(policyId) {
+    try {
+      const updatedPolicy = await ShopReturnPolicy.findByIdAndUpdate(
+        policyId,
+        { isActive: false },
+        { new: true }
+      );
+      if (!updatedPolicy) {
+        throw new Error("Return Policy not found");
       }
       return updatedPolicy;
     } catch (error) {
