@@ -6,12 +6,7 @@ const { verifyAccessToken, verifyVendor } = require("../middleware/authJWT");
 const upload = require("./../middleware/shopMiddlware");
 
 // Create a new shop
-router.post(
-  "/v1/create-shop",
-  upload.single("shopLogo"),
-  verifyAccessToken,
-  shopController.create
-);
+router.post("/v1/create-shop", verifyAccessToken, shopController.create);
 
 // Update an existing shop
 router.put(

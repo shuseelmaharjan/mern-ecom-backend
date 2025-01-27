@@ -1,19 +1,34 @@
-const Shop = require("../models/shop");
+const { Shop } = require("../models/shop");
+const User = require("../models/users");
 
 class ShopService {
   // Create Shop
-  async createShop(newShopData) {
-    try {
-      const existingShop = await Shop.findOne({ userId: newShopData.userId });
-      if (existingShop) {
-        throw new Error("User can only create one shop.");
-      }
+  async createShop(data, userId) {
+    const { shopName, shopDescription, categories } = data;
 
-      const shop = new Shop(newShopData);
-      await shop.save();
-      return { success: true, shop };
+    const existingShop = await Shop.findOne({ userId: userId });
+
+    try {
+      if (existingShop) {
+        return { success: false, message: "User can only create one shop." };
+      }
+      const newShop = new Shop({
+        shopName,
+        shopDescription,
+        categories,
+        userId,
+      });
+      const user = await User.findById(userId);
+      if (user) {
+        user.isUser = false;
+        user.isVendor = true;
+        await user.save();
+      }
+      await newShop.save();
+      return { success: true, message: "Shop created successfully." };
     } catch (error) {
-      throw new Error(error.message);
+      console.error("Error creating shop:", error);
+      return { success: false, message: error.message || "An error occurred." };
     }
   }
 
@@ -58,4 +73,4 @@ class ShopService {
   }
 }
 
-module.exports = ShopService;
+module.exports = new ShopService();

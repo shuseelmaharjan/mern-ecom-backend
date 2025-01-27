@@ -1,26 +1,15 @@
 const jwt = require("jsonwebtoken");
-const ShopService = require("../services/shopService");
+const shopService = require("../services/shopService");
 require("dotenv").config();
+const GetUserId = require("../helper/getUserId");
 
 class ShopController {
   // Create Shop
   async create(req, res) {
     try {
-      const userId = req.user.id;
-      const { shopName, ownerName, shopDescription } = req.body;
-
-      const shopLogo = req.file ? `/shop/${req.file.filename}` : null;
-
-      const newShopData = {
-        shopName,
-        ownerName,
-        shopLogo,
-        shopDescription,
-        userId,
-      };
-
-      const shopService = new ShopService();
-      const result = await shopService.createShop(newShopData);
+      const id = new GetUserId(req);
+      const userId = await id.getUserId();
+      const result = await shopService.createShop(req.body, userId);
       res.status(201).json(result);
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });

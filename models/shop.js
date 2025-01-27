@@ -84,7 +84,7 @@ const defaultReturnPolicyLogSchema = new mongoose.Schema({
 const ShopSchema = new mongoose.Schema({
   shopName: { type: String, required: true },
   ownerName: { type: String, required: false, default: null },
-  shopLogo: { type: String, required: false },
+  shopLogo: { type: String, required: false, default: null },
   shopDescription: { type: String, required: true },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   createdDate: { type: Date, default: Date.now },
