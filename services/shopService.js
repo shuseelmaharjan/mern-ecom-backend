@@ -1,4 +1,4 @@
-const { Shop } = require("../models/shop");
+const { Shop, ShopShippingPolicy } = require("../models/shop");
 const User = require("../models/users");
 
 class ShopService {
@@ -27,23 +27,50 @@ class ShopService {
       await newShop.save();
       return { success: true, message: "Shop created successfully." };
     } catch (error) {
-      console.error("Error creating shop:", error);
       return { success: false, message: error.message || "An error occurred." };
     }
   }
 
-  // Update Shop
-  async updateShop(shopId, updatedData) {
+  async myShopDetails(userId) {
     try {
-      const shop = await Shop.findByIdAndUpdate(shopId, updatedData, {
-        new: true,
-      });
+      const shop = await Shop.findOne({ userId: userId })
+        .populate({
+          path: "categories",
+          select: "name image",
+        })
+        .exec();
+
+      return shop;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  async updateShopLogo(shopId, logoPath) {
+    const shop = await Shop.findById(shopId);
+    if (!shop) {
+      throw new Error("Shop not found");
+    }
+
+    shop.shopLogo = logoPath;
+    shop.updatedDate = new Date();
+    await shop.save();
+
+    return shop;
+  }
+
+  async updateDescription(shopId, newDescription) {
+    try {
+      const shop = await Shop.findById(shopId);
       if (!shop) {
         throw new Error("Shop not found");
       }
-      return { success: true, shop };
+      shop.shopDescription = newDescription;
+      shop.updatedDate = new Date();
+      await shop.save();
+      return shop;
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
   }
 
@@ -67,6 +94,58 @@ class ShopService {
     try {
       const shop = await Shop.findOne({ userId });
       return shop;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  async createShippingPolicy(shopId, shippingPolicy) {
+    const {
+      shippingPolicyName,
+      shippingDays,
+      shippingPolicyDescription,
+      costofDelivery,
+    } = shippingPolicy;
+
+    try {
+      const newShippingPolicy = new ShopShippingPolicy({
+        shippingPolicyName,
+        shippingDays,
+        shippingPolicyDescription,
+        costofDelivery,
+        shopId,
+      });
+
+      const savedPolicy = await newShippingPolicy.save();
+      return savedPolicy;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  async getShippingPolicies(shopId) {
+    try {
+      const policies = await ShopShippingPolicy.find({
+        shopId,
+        isActive: true,
+      });
+      return policies;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  async deactivateShopShippingPolicy(policyId) {
+    try {
+      const updatedPolicy = await ShopShippingPolicy.findByIdAndUpdate(
+        policyId,
+        { isActive: false },
+        { new: true }
+      );
+      if (!updatedPolicy) {
+        throw new Error("Shipping Policy not found");
+      }
+      return updatedPolicy;
     } catch (error) {
       throw new Error(error.message);
     }

@@ -83,7 +83,6 @@ const defaultReturnPolicyLogSchema = new mongoose.Schema({
 
 const ShopSchema = new mongoose.Schema({
   shopName: { type: String, required: true },
-  ownerName: { type: String, required: false, default: null },
   shopLogo: { type: String, required: false, default: null },
   shopDescription: { type: String, required: true },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
@@ -100,16 +99,13 @@ const ShopSchema = new mongoose.Schema({
 });
 
 const shopShippingPolicySchema = new mongoose.Schema({
-  shippingPolicy: { type: String, required: true },
+  shippingPolicyName: { type: String, required: true },
   shopId: { type: mongoose.Schema.Types.ObjectId, ref: "Shop", required: true },
-  defaultShippingPolicyId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "DefaultShippingPolicy",
-    required: true,
-  },
-  createdDate: { type: Date, default: Date.now },
-  updatedDate: { type: Date, default: null },
+  shippingDays: { type: String, required: true },
+  shippingPolicyDescription: { type: String, required: true },
   isActive: { type: Boolean, default: true },
+  costofDelivery: { type: Number, required: true },
+  createdAt: { type: Date, default: Date.now },
 });
 
 const shopReturnPolicySchema = new mongoose.Schema({

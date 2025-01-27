@@ -2,21 +2,41 @@ const express = require("express");
 const router = express.Router();
 const shopController = require("../controller/shopController");
 const { verifyAccessToken, verifyVendor } = require("../middleware/authJWT");
-
-const upload = require("./../middleware/shopMiddlware");
+const uploadMiddleware = require("./../middleware/uploadShopLogo");
 
 // Create a new shop
 router.post("/v1/create-shop", verifyAccessToken, shopController.create);
-
-// Update an existing shop
-router.put(
-  "/v1/update-shop/:id",
-  upload.single("shopLogo"),
+router.get(
+  "/v1/my-shop-details",
   verifyAccessToken,
-  verifyVendor,
-  shopController.update
+  shopController.myShopDetails
 );
 
+router.put(
+  "/v1/:shopId/logo",
+  uploadMiddleware.single("shopLogo"),
+  verifyAccessToken,
+  shopController.updateShopLogo
+);
+
+router.put(
+  "/v1/:shopId/description",
+  verifyAccessToken,
+  shopController.updateDescription
+);
+
+router.post(
+  "/v1/:shopId/add-shipping-policy",
+  verifyAccessToken,
+  shopController.createShopPolicy
+);
+
+router.get("/v1/:shopId/shipping-policies", shopController.getShopPolicies);
+router.put(
+  "/v1/deactivate-shop-shipping-policy/:policyId",
+  verifyAccessToken,
+  shopController.deactivateShopShippingPolicy
+);
 // Deactivate a shop (set isActive to false)
 router.put(
   "/v1/deactivate-shop/:id",
@@ -24,7 +44,5 @@ router.put(
   verifyVendor,
   shopController.deactivate
 );
-
-router.get("/v1/myshop", verifyVendor, shopController.getShopDetails);
 
 module.exports = router;
