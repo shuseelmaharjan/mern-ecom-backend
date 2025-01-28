@@ -1,104 +1,95 @@
 const mongoose = require("mongoose");
-
-const MediaSchema = new mongoose.Schema({
-  images: [
-    {
-      url: { type: String, required: false },
-      default: { type: Boolean, default: false },
-    },
-  ],
-});
-
-const dimensionDetailsSchema = new mongoose.Schema({
-  width: { type: Number, required: false, default: null },
-  height: { type: Number, required: false, default: null },
-});
-
-const dimensionSchema = new mongoose.Schema({
-  isEnabled: { type: Boolean, required: true, default: false },
-  details: {
-    type: dimensionDetailsSchema,
-    required: false,
-    default: null,
-  },
-});
-
-const colorSchema = new mongoose.Schema({
-  isEnabled: { type: Boolean, required: true, default: false },
-  details: [
-    {
-      code: { type: String, required: false, default: null },
-      name: { type: String, required: false, default: null },
-    },
-  ],
-});
-
-const shippingSchema = new mongoose.Schema({
-  service: { type: Boolean, required: true },
-  processingTime: { type: String },
-  freeShipping: { type: Boolean, default: false },
-  cod: { type: Number },
-});
-
-const internationalShippingSchema = new mongoose.Schema({
-  service: { type: Boolean, required: true },
-  processingTime: { type: String },
-  freeShipping: { type: Boolean, default: false },
-  cod: { type: Number },
-});
+const { v4: uuidv4 } = require("uuid");
 
 const ProductSchema = new mongoose.Schema({
   title: { type: String, required: true },
-  media: MediaSchema,
-  video: { type: String, required: false },
-  description: { type: String, required: true },
-  price: { type: Number, required: true },
-  quantity: { type: Number, required: true },
-  productLimit: { type: Number, required: false },
-  brand: { type: String, required: false },
-  weight: { type: Number, required: false },
-  dimension: dimensionSchema,
-  sku: { type: String, required: false },
-  colors: colorSchema,
-  size: [{ type: String, required: false }],
-  tags: [{ type: String, required: false }],
-  materials: [{ type: String, required: false }],
-  shipping: shippingSchema,
-  internationalShipping: internationalShippingSchema,
-  returnAndExchange: {
-    isEnabled: { type: Boolean, required: true, default: false },
-    details: {
-      type: {
-        days: { type: Number, required: false, default: null },
-        description: { type: String, required: false, default: null },
-      },
-      required: function () {
-        return this.isEnabled;
-      },
-      default: null,
-    },
+  category: {
+    type: mongoose.Schema.Types.ObjectId,
+    refPath: "Category",
+    required: true,
   },
-  renewal: { type: Boolean, default: false },
-  expDate: { type: Date },
-  active: { type: Boolean, default: true },
+  description: { type: String, default: null, required: false },
+  price: { type: Number, default: 0 },
+  quantity: { type: Number, default: null },
+  productLimit: { type: Number, default: null },
+  brand: { type: String, default: null },
+  weight: { type: Number, default: null },
+  shape: { type: String, default: null },
+  hasDimension: { type: Boolean, default: false },
+  dimension: {
+    width: { type: Number, default: null },
+    height: { type: Number, default: null },
+  },
+  hasColor: { type: Boolean, default: false },
+  color: [{ type: String, default: null }],
+  material: { type: String, default: null },
+  hasSize: { type: Boolean, default: false },
+  size: [{ type: String, default: null }],
+  customOrder: { type: Boolean, default: false },
+  tags: [{ type: String, default: null }],
   createdAt: { type: Date, default: Date.now },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
   },
-  views: { type: Number, default: 0 },
-
-  category: {
+  defaultShipping: { type: Boolean, default: true },
+  shipping: {
     type: mongoose.Schema.Types.ObjectId,
-    refPath: "Category",
-    required: true,
+    ref: "ShopShippingPolicy",
+    required: false,
   },
-  categoryModel: {
-    type: String,
-    required: true,
-    enum: ["Category", "SubCategory", "GrandCategory"],
+  defaultReturnPolicy: { type: Boolean, default: true },
+  returnPolicy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "ShopReturnPolicy",
+    required: false,
   },
+  isActive: { type: Boolean, default: false },
+  isDraft: { type: Boolean, default: true },
+  haveVariations: { type: Boolean, default: false },
+  variations: [
+    {
+      sku: { type: String, default: uuidv4 },
+      price: { type: Number, required: true },
+      weight: { type: Number, required: false },
+      color: { type: String, required: false },
+      media: {
+        images: [{ type: String, required: false }],
+        video: { type: String, required: false },
+      },
+      isDefault: { type: Boolean, default: false },
+    },
+  ],
+  views: { type: Number, default: 0 },
+  rating: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 5,
+  },
+  reviews: [
+    {
+      user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+      },
+      rating: { type: Number, required: true, min: 0, max: 5 },
+      comment: { type: String, required: true },
+      images: [{ type: String, required: false }],
+      createdAt: { type: Date, default: Date.now },
+    },
+  ],
+});
+
+ProductSchema.pre("save", function (next) {
+  if (this.variations && this.variations.length > 0) {
+    this.variations.forEach((variation, index) => {
+      variation.isDefault = index === 0;
+    });
+  }
+  next();
 });
 
 module.exports = mongoose.model("Product", ProductSchema);
