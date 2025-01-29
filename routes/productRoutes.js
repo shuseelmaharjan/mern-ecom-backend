@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 const productController = require("../controller/productController");
 const { verifyAccessToken } = require("./../middleware/authJWT");
-const product = require("../models/product");
+const uploadFiles = require("../middleware/uploadFiles");
+const FileController = require("../controller/fileController");
 
 router.post(
   "/v1/create-product",
@@ -68,6 +69,52 @@ router.put(
   "/v1/remove-tags/:id",
   verifyAccessToken,
   productController.removeTags
+);
+
+router.put(
+  "/v1/update-product/:id",
+  verifyAccessToken,
+  productController.updateProductDetails
+);
+
+router.get(
+  "/v1/get-product-variation/:id",
+  verifyAccessToken,
+  productController.getProductVariations
+);
+
+router.put(
+  "/v1/products/:productId/variations",
+  uploadFiles,
+  FileController.updateProduct
+);
+
+router.put(
+  "/v1/products/:productId/product-variations",
+  uploadFiles,
+  FileController.updateProduct
+);
+
+router.put(
+  "/v1/products/:productId/variations/:variationId",
+  uploadFiles,
+  FileController.updateVariation
+);
+
+router.get(
+  "/v1/products/:productId/variations/:variationId",
+  FileController.getVariation
+);
+
+router.delete(
+  "/v1/products/:productId/variations/:variationIds",
+  productController.removeProductVariation
+);
+
+router.put(
+  "/v1/update-has-variations/:id",
+  verifyAccessToken,
+  productController.updateHaveVariations
 );
 
 module.exports = router;

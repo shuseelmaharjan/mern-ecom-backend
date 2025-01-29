@@ -183,6 +183,71 @@ class ProductController {
       res.status(500).json({ message: err.message });
     }
   }
+
+  async updateProductDetails(req, res) {
+    const productId = req.params.id;
+    const product = req.body;
+    try {
+      const updatedProduct = await productService.updateProductDetails(
+        productId,
+        product
+      );
+      res.status(200).json(updatedProduct);
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+
+  async getProductVariations(req, res) {
+    const productId = req.params.id;
+    try {
+      const getProductVariations = await productService.getProductVariations(
+        productId
+      );
+      res.status(200).json(getProductVariations);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async updateHaveVariations(req, res) {
+    const productId = req.params.id;
+    const haveVariations = req.body.haveVariations;
+    try {
+      const updatedProduct = await productService.updateHaveVariations(
+        productId,
+        haveVariations
+      );
+      res.status(200).json(updatedProduct);
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+
+  async removeProductVariation(req, res) {
+    try {
+      const { productId, variationIds } = req.params;
+      const variationIdsArray = variationIds.split(",");
+
+      const success = await productService.deleteVariations(
+        productId,
+        variationIdsArray
+      );
+
+      if (success) {
+        return res
+          .status(200)
+          .json({ message: "Variation removed successfully" });
+      } else {
+        return res
+          .status(404)
+          .json({ message: "Product or variation not found" });
+      }
+    } catch (error) {
+      console.error("Error removing variation:", error);
+      return res.status(500).json({ message: error.message });
+    }
+  }
 }
 
 module.exports = new ProductController();

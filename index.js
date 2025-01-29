@@ -83,11 +83,8 @@ app.set("socketio", io);
 // Static Files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/profile", express.static(path.join(__dirname, "profile")));
-app.use(
-  "/media/uploads",
-  express.static(path.join(__dirname, "media/uploads"))
-);
-app.use("/media/video", express.static(path.join(__dirname, "media/video")));
+app.use("/media", express.static(path.join(__dirname, "media")));
+// app.use("/media", express.static(path.join(__dirname, "media")));
 app.use("/banner", express.static(path.join(__dirname, "banner")));
 
 app.get("/banner/:date/:imageName", (req, res) => {

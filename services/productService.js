@@ -223,7 +223,6 @@ class ProductService {
         throw new Error("Product not found");
       }
 
-      console.log("Response:", response);
       return response;
     } catch (err) {
       console.error("Error:", err.message);
@@ -245,6 +244,105 @@ class ProductService {
       return response;
     } catch (err) {
       throw new Error(err.message || "Error removing size");
+    }
+  }
+
+  async updateProductDetails(productId, product) {
+    const {
+      title,
+      description,
+      price,
+      quantity,
+      productLimit,
+      brand,
+      weight,
+      shape,
+      material,
+      customOrder,
+      hasDimension,
+      dimension,
+    } = product;
+
+    try {
+      const response = await Product.findByIdAndUpdate(
+        productId,
+        {
+          title,
+          description,
+          price,
+          quantity,
+          productLimit,
+          brand,
+          weight,
+          shape,
+          material,
+          customOrder,
+          hasDimension,
+          dimension,
+        },
+        { new: true }
+      );
+      return response;
+    } catch (err) {
+      throw new Error(err);
+    }
+  }
+
+  async getProductVariations(productId) {
+    try {
+      const response = await Product.findById(
+        productId,
+        "haveVariations variations"
+      );
+      if (!response) {
+        return { haveVariations: false, variations: [] };
+      }
+
+      return {
+        haveVariations: response.haveVariations,
+        variations: response.variations,
+      };
+    } catch (err) {
+      throw new Error(err.message || "Error fetching variations");
+    }
+  }
+
+  async updateHaveVariations(productId, haveVariations) {
+    try {
+      const response = await Product.findByIdAndUpdate(
+        productId,
+        { haveVariations },
+        { new: true }
+      );
+      return response;
+    } catch (err) {
+      throw new Error(err);
+    }
+  }
+
+  async deleteVariations(productId, variationIds) {
+    try {
+      let product = await Product.findById(productId);
+      if (!product) {
+        console.error(`Product not found: ${productId}`);
+        return false;
+      }
+
+      let updatedVariations = product.variations.filter(
+        (variation) => !variationIds.includes(variation._id.toString())
+      );
+
+      if (updatedVariations.length === product.variations.length) {
+        console.error(`No variations found for IDs: ${variationIds}`);
+        return false;
+      }
+
+      product.variations = updatedVariations;
+      await product.save();
+      return true;
+    } catch (err) {
+      console.error("Error deleting variations:", err);
+      return false;
     }
   }
 }

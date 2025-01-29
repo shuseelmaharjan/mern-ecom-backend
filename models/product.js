@@ -51,9 +51,13 @@ const ProductSchema = new mongoose.Schema({
   variations: [
     {
       sku: { type: String, default: uuidv4 },
-      price: { type: Number, required: true },
+      hasUniquePrice: { type: Boolean, default: false },
+      price: { type: Number, required: false },
+      hasUniqueWeight: { type: Boolean, default: false },
       weight: { type: Number, required: false },
       color: { type: String, required: false },
+      hasUniqueStock: { type: Boolean, default: false },
+      stock: { type: Number, required: false },
       media: {
         images: [{ type: String, required: false }],
         video: { type: String, required: false },
