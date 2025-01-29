@@ -177,6 +177,22 @@ class ShopService {
     }
   }
 
+  async getShopReturnPoliciesByVendor(userId) {
+    try {
+      const shop = await Shop.findOne({ userId });
+      if (!shop) {
+        throw new Error("Shop not found");
+      }
+      const policies = await ShopReturnPolicy.find({
+        shopId: shop._id,
+        isActive: true,
+      });
+      return policies;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
   async deactivateShopReturnPolicy(policyId) {
     try {
       const updatedPolicy = await ShopReturnPolicy.findByIdAndUpdate(
@@ -188,6 +204,28 @@ class ShopService {
         throw new Error("Return Policy not found");
       }
       return updatedPolicy;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  async addReturnPolicyWithUserId(userId, policyName, policyDescription) {
+    try {
+      const shop = await Shop.findOne({ userId });
+
+      if (!shop) {
+        throw new Error("Shop not found for this user.");
+      }
+
+      const newPolicy = new ShopReturnPolicy({
+        shopId: shop._id,
+        policyName,
+        policyDescription,
+      });
+
+      await newPolicy.save();
+
+      return newPolicy;
     } catch (error) {
       throw new Error(error.message);
     }

@@ -50,7 +50,6 @@ class ProductController {
   async addDimension(req, res) {
     const productId = req.params.id;
     const dimension = req.body;
-    console.log(dimension);
     try {
       const updatedProduct = await productService.addDimension(
         productId,
@@ -225,6 +224,7 @@ class ProductController {
   }
 
   async removeProductVariation(req, res) {
+    console.log(req);
     try {
       const { productId, variationIds } = req.params;
       const variationIdsArray = variationIds.split(",");
@@ -246,6 +246,33 @@ class ProductController {
     } catch (error) {
       console.error("Error removing variation:", error);
       return res.status(500).json({ message: error.message });
+    }
+  }
+
+  async productPolicy(req, res) {
+    const getUserId = new GetUserId(req);
+    const userId = await getUserId.getUserId();
+    try {
+      const productId = req.params.productId;
+      const policy = await productService.productPolicy(productId, userId);
+      res.status(200).json(policy);
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+  async updateProductPolicy(req, res) {
+    try {
+      const { productId } = req.params;
+      const policy = req.body;
+
+      const updatedPolicy = await productService.updateProductPolicy(
+        productId,
+        policy
+      );
+
+      return res.status(200).json({ success: true, data: updatedPolicy });
+    } catch (err) {
+      return res.status(500).json({ success: false, message: err.message });
     }
   }
 }

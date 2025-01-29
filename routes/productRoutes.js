@@ -108,6 +108,7 @@ router.get(
 
 router.delete(
   "/v1/products/:productId/variations/:variationIds",
+  verifyAccessToken,
   productController.removeProductVariation
 );
 
@@ -115,6 +116,18 @@ router.put(
   "/v1/update-has-variations/:id",
   verifyAccessToken,
   productController.updateHaveVariations
+);
+
+router.get(
+  "/v1/get-product-policy/:productId",
+  verifyAccessToken,
+  productController.productPolicy
+);
+
+router.put(
+  "/v1/update-product-policy/:productId",
+  verifyAccessToken,
+  productController.updateProductPolicy
 );
 
 module.exports = router;

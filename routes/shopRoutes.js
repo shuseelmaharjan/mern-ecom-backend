@@ -49,17 +49,27 @@ router.get(
   shopController.getShopReturnPolicies
 );
 
+router.get(
+  "/v1/get-shop-return-policy",
+  verifyAccessToken,
+  shopController.getShopReturnPoliciesByVendor
+);
+
 router.put(
   "/v1/deactivate-shop-return-policy/:policyId",
   verifyAccessToken,
   shopController.deactivateShopReturnPolicy
 );
-// Deactivate a shop (set isActive to false)
 router.put(
   "/v1/deactivate-shop/:id",
   verifyAccessToken,
-  verifyVendor,
   shopController.deactivate
+);
+
+router.post(
+  "/v2/create-shop-return-policy",
+  verifyAccessToken,
+  shopController.addReturnPolicyWithUserId
 );
 
 module.exports = router;

@@ -1,4 +1,10 @@
 const Product = require("../models/product");
+const {
+  ShopShippingPolicy,
+  ShopReturnPolicy,
+  CompanyReturnPolicy,
+  CompanyShippingPolicy,
+} = require("../models/shop");
 
 class ProductService {
   async createProduct(product, userId) {
@@ -343,6 +349,88 @@ class ProductService {
     } catch (err) {
       console.error("Error deleting variations:", err);
       return false;
+    }
+  }
+
+  async productPolicy(productId, userId) {
+    try {
+      const product = await Product.findById(
+        productId,
+        "defaultShipping shipping defaultReturnPolicy returnPolicy"
+      );
+
+      if (!product) {
+        throw new Error("Product not found");
+      }
+
+      let shippingPolicy = null;
+      let returnPolicy = null;
+
+      if (product.defaultShipping) {
+        shippingPolicy = true;
+      } else {
+        if (product.shipping) {
+          shippingPolicy = await ShopShippingPolicy.findOne({
+            _id: product.shipping,
+            isActive: true,
+          });
+        } else {
+          shippingPolicy = await ShopShippingPolicy.findOne({
+            userId,
+            isDefault: true,
+            isActive: true,
+          });
+        }
+      }
+
+      if (product.defaultReturnPolicy) {
+        returnPolicy = true;
+      } else {
+        if (product.returnPolicy) {
+          returnPolicy = await ShopReturnPolicy.findOne({
+            _id: product.returnPolicy,
+            isActive: true,
+          });
+        } else {
+          returnPolicy = await ShopReturnPolicy.findOne({
+            userId,
+            isDefault: true,
+            isActive: true,
+          });
+        }
+      }
+
+      return {
+        productId,
+        defaultShipping: shippingPolicy === true,
+        shippingPolicy: shippingPolicy !== true ? shippingPolicy : undefined,
+        defaultReturnPolicy: returnPolicy === true,
+        returnPolicy: returnPolicy !== true ? returnPolicy : undefined,
+      };
+    } catch (err) {
+      throw new Error(err.message);
+    }
+  }
+
+  async updateProductPolicy(productId, policy) {
+    try {
+      const product = await Product.findById(productId);
+      if (!product) {
+        throw new Error("Product not found");
+      }
+
+      if (policy.defaultReturnPolicy) {
+        product.defaultReturnPolicy = true;
+        product.returnPolicy = null;
+      } else {
+        product.defaultReturnPolicy = false;
+        product.returnPolicy = policy.returnPolicy;
+      }
+
+      await product.save();
+      return product;
+    } catch (err) {
+      throw new Error(err.message);
     }
   }
 }

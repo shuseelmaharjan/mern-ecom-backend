@@ -211,6 +211,17 @@ class ShopController {
     }
   }
 
+  async getShopReturnPoliciesByVendor(req, res) {
+    try {
+      const id = new GetUserId(req);
+      const userId = await id.getUserId();
+      const result = await shopService.getShopReturnPoliciesByVendor(userId);
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
   async deactivateShopReturnPolicy(req, res) {
     const { policyId } = req.params;
 
@@ -221,6 +232,33 @@ class ShopController {
       res.status(200).json(updatedPolicy);
     } catch (error) {
       res.status(400).json({ error: error.message });
+    }
+  }
+
+  async addReturnPolicyWithUserId(req, res) {
+    try {
+      const id = new GetUserId(req);
+      const userId = await id.getUserId();
+
+      const { policyName, policyDescription } = req.body;
+
+      if (!policyName || !policyDescription) {
+        return res
+          .status(400)
+          .json({ message: "Policy name and description are required." });
+      }
+
+      const policy = await shopService.addReturnPolicyWithUserId(
+        userId,
+        policyName,
+        policyDescription
+      );
+
+      return res
+        .status(201)
+        .json({ message: "Return policy added successfully", policy });
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
     }
   }
 }
