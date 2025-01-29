@@ -433,6 +433,28 @@ class ProductService {
       throw new Error(err.message);
     }
   }
+
+  async updateProductShippingPolicy(productId, policy) {
+    try {
+      const product = await Product.findById(productId);
+      if (!product) {
+        throw new Error("Product not found");
+      }
+
+      if (policy.defaultShipping) {
+        product.defaultShipping = true;
+        product.shipping = null;
+      } else {
+        product.defaultShipping = false;
+        product.shipping = policy.shippingPolicy;
+      }
+
+      await product.save();
+      return product;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
 }
 
 module.exports = new ProductService();

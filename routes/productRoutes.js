@@ -130,4 +130,9 @@ router.put(
   productController.updateProductPolicy
 );
 
+router.put(
+  "/v1/update-product-shipping-policy/:productId",
+  verifyAccessToken,
+  productController.updateProductShippingPolicy
+);
 module.exports = router;

@@ -173,6 +173,17 @@ class ShopController {
     }
   }
 
+  async getShopPoliciesByVendor(req, res) {
+    try {
+      const id = new GetUserId(req);
+      const userId = await id.getUserId();
+      const result = await shopService.getShopPoliciesByVendor(userId);
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
   async deactivateShopShippingPolicy(req, res) {
     const { policyId } = req.params;
 

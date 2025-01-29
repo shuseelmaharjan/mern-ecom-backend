@@ -186,6 +186,7 @@ class ProductController {
   async updateProductDetails(req, res) {
     const productId = req.params.id;
     const product = req.body;
+    console.log(product);
     try {
       const updatedProduct = await productService.updateProductDetails(
         productId,
@@ -273,6 +274,19 @@ class ProductController {
       return res.status(200).json({ success: true, data: updatedPolicy });
     } catch (err) {
       return res.status(500).json({ success: false, message: err.message });
+    }
+  }
+  async updateProductShippingPolicy(req, res) {
+    try {
+      const { productId } = req.params;
+      const policy = req.body;
+      const updatedPolicy = await productService.updateProductShippingPolicy(
+        productId,
+        policy
+      );
+      return res.status(200).json({ success: true, data: updatedPolicy });
+    } catch (error) {
+      return res.status(500).json({ success: false, message: error.message });
     }
   }
 }

@@ -139,6 +139,22 @@ class ShopService {
     }
   }
 
+  async getShopPoliciesByVendor(userId) {
+    try {
+      const shop = await Shop.findOne({ userId });
+      if (!shop) {
+        throw new Error("Shop not found");
+      }
+      const policies = await ShopShippingPolicy.find({
+        shopId: shop._id,
+        isActive: true,
+      });
+      return policies;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
   async deactivateShopShippingPolicy(policyId) {
     try {
       const updatedPolicy = await ShopShippingPolicy.findByIdAndUpdate(

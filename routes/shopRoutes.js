@@ -32,6 +32,11 @@ router.post(
 );
 
 router.get("/v1/:shopId/shipping-policies", shopController.getShopPolicies);
+router.get(
+  "/v2/shipping-policies",
+  verifyAccessToken,
+  shopController.getShopPoliciesByVendor
+);
 router.put(
   "/v1/deactivate-shop-shipping-policy/:policyId",
   verifyAccessToken,
