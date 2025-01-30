@@ -496,6 +496,7 @@ class ProductService {
       .lean();
 
     return products.map((product) => ({
+      _id: product._id,
       title: product.title,
       category: product.category?.name,
       description: product.description,
