@@ -85,7 +85,11 @@ const ShopSchema = new mongoose.Schema({
   shopName: { type: String, required: true },
   shopLogo: { type: String, required: false, default: null },
   shopDescription: { type: String, required: true },
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Users",
+    required: true,
+  },
   createdDate: { type: Date, default: Date.now },
   updatedDate: { type: Date, default: null },
   isActive: { type: Boolean, default: true },
