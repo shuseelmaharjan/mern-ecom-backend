@@ -16,10 +16,8 @@ const ProductSchema = new mongoose.Schema({
   weight: { type: Number, required: false },
   shape: { type: String, required: false },
   hasDimension: { type: Boolean, default: false },
-  dimension: {
-    width: { type: Number, required: false },
-    height: { type: Number, required: false },
-  },
+  productHeight: { type: Number, required: false },
+  productWidth: { type: Number, required: false },
   hasColor: { type: Boolean, default: false },
   color: [{ type: String, required: false }],
   material: { type: String, required: false },
@@ -30,7 +28,7 @@ const ProductSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    ref: "Users",
     required: true,
   },
   defaultShipping: { type: Boolean, default: true },
@@ -76,7 +74,7 @@ const ProductSchema = new mongoose.Schema({
     {
       user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: "Users",
         required: true,
       },
       rating: { type: Number, required: true, min: 0, max: 5 },

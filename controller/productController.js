@@ -289,6 +289,29 @@ class ProductController {
       return res.status(500).json({ success: false, message: error.message });
     }
   }
+
+  async getVendorProducts(req, res) {
+    try {
+      const { sort, isActive, isDraft } = req.params;
+      const getUserId = new GetUserId(req);
+      const userId = await getUserId.getUserId();
+
+      const filters = {
+        isActive: isActive === "true",
+        isDraft: isDraft === "true",
+      };
+
+      const products = await productService.getVendorProducts(
+        filters,
+        sort,
+        userId
+      );
+      res.json(products);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
 }
 
 module.exports = new ProductController();

@@ -1,10 +1,6 @@
 const Product = require("../models/product");
-const {
-  ShopShippingPolicy,
-  ShopReturnPolicy,
-  CompanyReturnPolicy,
-  CompanyShippingPolicy,
-} = require("../models/shop");
+const { ShopShippingPolicy, ShopReturnPolicy } = require("../models/shop");
+const User = require("../models/users");
 
 class ProductService {
   async createProduct(product, userId) {
@@ -266,7 +262,8 @@ class ProductService {
       material,
       customOrder,
       hasDimension,
-      dimension,
+      productHeight,
+      productWidth,
     } = product;
 
     try {
@@ -284,7 +281,10 @@ class ProductService {
           material,
           customOrder,
           hasDimension,
-          dimension,
+          productHeight,
+          productWidth,
+          isDraft: false,
+          isActive: true,
         },
         { new: true }
       );
@@ -454,6 +454,72 @@ class ProductService {
     } catch (error) {
       throw new Error(error.message);
     }
+  }
+  async getVendorProducts(filters, sort, userId) {
+    console.log(userId);
+    const query = { createdBy: userId };
+
+    if (filters.isActive) query.isActive = true;
+    if (filters.isDraft) query.isDraft = true;
+
+    let sortQuery = {};
+
+    switch (sort) {
+      case "priceHighLow":
+        sortQuery.price = -1;
+        break;
+      case "priceLowHigh":
+        sortQuery.price = 1;
+        break;
+      case "quantityHighLow":
+        sortQuery.quantity = -1;
+        break;
+      case "quantityLowHigh":
+        sortQuery.quantity = 1;
+        break;
+      case "latestFirst":
+        sortQuery.createdAt = -1;
+        break;
+      case "oldestFirst":
+        sortQuery.createdAt = 1;
+        break;
+      default:
+        break;
+    }
+
+    const products = await Product.find(query)
+      .sort(sortQuery)
+      .populate("category")
+      .populate("createdBy")
+      .populate("shipping")
+      .populate("returnPolicy")
+      .lean();
+
+    return products.map((product) => ({
+      title: product.title,
+      category: product.category?.name,
+      description: product.description,
+      price: product.price,
+      quantity: product.quantity,
+      productLimit: product.productLimit,
+      brand: product.brand,
+      weight: product.weight,
+      color: product.color,
+      material: product.material,
+      size: product.size,
+      customOrder: product.customOrder,
+      createdAt: product.createdAt,
+      variations: product.variations.map((variation) => ({
+        sku: variation.sku,
+        media: variation.media.images.slice(0, 2),
+      })),
+      totalVariations: product.variations.length,
+      views: product.views,
+      rating: product.rating,
+      userRating: product.reviews.find(
+        (review) => review.user.toString() === userId
+      )?.rating,
+    }));
   }
 }
 

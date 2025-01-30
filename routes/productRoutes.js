@@ -135,4 +135,11 @@ router.put(
   verifyAccessToken,
   productController.updateProductShippingPolicy
 );
+
+router.get(
+  "/v1/get-vendor-products/:sort/:isActive/:isDraft",
+  verifyAccessToken,
+  productController.getVendorProducts
+);
+
 module.exports = router;
