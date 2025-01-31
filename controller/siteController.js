@@ -1,6 +1,7 @@
 const siteService = require("../services/siteService");
 const RoleChecker = require("../helper/roleChecker");
 const GetUserId = require("../helper/getUserId");
+const { Charge } = require("../models/site");
 
 class SiteController {
   async createSiteManagerData(req, res) {
@@ -57,6 +58,30 @@ class SiteController {
         logoFilename
       );
 
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async createCharge(req, res) {
+    try {
+      await Charge.updateMany({ isActive: true }, { isActive: false });
+
+      const newChargeData = { ...req.body, isActive: true };
+      const response = await siteService.createCharge(newChargeData);
+
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async getSiteCharges(req, res) {
+    try {
+      const response = await siteService.getSiteCharges({ isActive: true });
       res.status(response.status).json(response.data);
     } catch (error) {
       console.error(error);

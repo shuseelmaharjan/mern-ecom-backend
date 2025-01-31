@@ -1,4 +1,4 @@
-const { SiteManager, SiteLogModel } = require("../models/site");
+const { SiteManager, SiteLogModel, Charge } = require("../models/site");
 const User = require("../models/users");
 
 class SiteService {
@@ -196,6 +196,41 @@ class SiteService {
           logs: logSentences,
           admins,
         },
+      };
+    } catch (error) {
+      console.error(error);
+      throw new Error(error.message);
+    }
+  }
+
+  async createCharge(body) {
+    try {
+      const { title, percentage } = body;
+
+      const newCharge = new Charge({
+        title,
+        percentage,
+        isActive: true,
+      });
+
+      await newCharge.save();
+
+      return {
+        status: 201,
+        data: { message: "Charge created successfully" },
+      };
+    } catch (error) {
+      console.error(error);
+      throw new Error(error.message);
+    }
+  }
+
+  async getSiteCharges() {
+    try {
+      const charges = await Charge.find({ isActive: true });
+      return {
+        status: 200,
+        data: charges,
       };
     } catch (error) {
       console.error(error);

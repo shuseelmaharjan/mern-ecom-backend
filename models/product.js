@@ -64,6 +64,7 @@ const ProductSchema = new mongoose.Schema({
     },
   ],
   views: { type: Number, default: 0 },
+  seles: { type: Number, default: 0 },
   rating: {
     type: Number,
     default: 0,

@@ -299,15 +299,27 @@ class OrderService {
   }
 
   static async deliveredOrder(orderId) {
-    const order = await Order.findById(orderId);
+    const order = await Order.findById(orderId).populate("orderItem");
 
     if (!order) {
       throw new Error("Order not found");
     }
 
+    const product = order.orderItem;
+
+    if (!product) {
+      throw new Error("Product not found");
+    }
+
     order.orderStatus = "DELIVERED";
     order.deliveredAt = new Date();
+
+    product.sales = (product.sales || 0) + 1;
+
+    // Save the updated product and order
+    await product.save();
     await order.save();
+
     return order;
   }
 }

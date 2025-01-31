@@ -18,4 +18,7 @@ router.put(
   siteController.updateSiteManagerData
 );
 
+router.post("/create-site-charge", verifyAdmin, siteController.createCharge);
+router.get("/site-charges", siteController.getSiteCharges);
+
 module.exports = router;

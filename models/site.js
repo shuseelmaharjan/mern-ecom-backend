@@ -37,11 +37,20 @@ const logSchema = new mongoose.Schema(
   { versionKey: false }
 );
 
+const chargeSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  percentage: { type: Number, required: true },
+  isActive: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now },
+});
+
 const SiteLogModel =
   mongoose.models.SiteLogModel || mongoose.model("SiteLogModel", logSchema);
+
+const Charge = mongoose.model("Charge", chargeSchema);
 
 const SiteManager =
   mongoose.models.SiteManager ||
   mongoose.model("SiteManager", siteManagerSchema);
 
-module.exports = { SiteManager, SiteLogModel };
+module.exports = { SiteManager, SiteLogModel, Charge };
