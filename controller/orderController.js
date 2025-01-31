@@ -36,6 +36,50 @@ class OrderController {
       res.status(400).json({ message: error.message });
     }
   }
+
+  static async getOrderDetails(req, res) {
+    try {
+      const orderId = req.params.id;
+      const orderDetails = await OrderService.getOrderDetails(orderId);
+      res.status(200).json(orderDetails);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+
+  static async placeOrder(req, res) {
+    try {
+      const { orderId } = req.params;
+      const { shippingMethod, trackingNumber, logisticCost } = req.body;
+      console.log("Request Body: ", req.body);
+
+      console.log("Order ID: ", orderId);
+      console.log("Shipping Method: ", shippingMethod);
+      console.log("Tracking Number: ", trackingNumber);
+      console.log("Logistic Cost: ", logisticCost);
+
+      const updatedOrder = await OrderService.placeOrder(
+        orderId,
+        shippingMethod,
+        trackingNumber,
+        logisticCost
+      );
+
+      res.status(200).json(updatedOrder);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+
+  static async deliveredOrder(req, res) {
+    try {
+      const { orderId } = req.params;
+      const updatedOrder = await OrderService.deliveredOrder(orderId);
+      res.status(200).json(updatedOrder);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
 }
 
 module.exports = OrderController;

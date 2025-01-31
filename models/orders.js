@@ -1,12 +1,13 @@
 const mongoose = require("mongoose");
 const uuid = require("uuid");
+const product = require("./product");
 
 const orderSchema = mongoose.Schema({
   orderId: { type: Number, unique: true },
   orderDate: { type: Date, default: Date.now },
   orderStatus: {
     type: String,
-    enum: ["PENDING", "SHIPPED", "DELIVERED", "CANCELLED"],
+    enum: ["PENDING", "SHIPPED", "DELIVERED", "RETURNED", "CANCELLED"],
     required: true,
     default: "PENDING",
   },
@@ -55,8 +56,11 @@ const orderSchema = mongoose.Schema({
   },
   trackingNumber: { type: String, required: false },
   productCost: { type: Number, required: true },
+  productSize: { type: String, required: false },
+  productColor: { type: String, required: false },
   discount: { type: Number, required: false },
   shippingCost: { type: Number, required: true },
+  logisticCost: { type: Number, required: false },
   shippingDate: { type: Date, default: null },
   receiverName: { type: String, required: true },
   receiverPhone: { type: String, required: true },

@@ -1,15 +1,8 @@
 const mongoose = require("mongoose");
-const shippingMethodSchema = mongoose.Schema({
+
+const ShippingMethodSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true,
-  },
-  cost: {
-    type: Number,
-    required: true,
-  },
-  estimatedDays: {
-    type: Number,
     required: true,
   },
   shippingCompany: {
@@ -18,16 +11,19 @@ const shippingMethodSchema = mongoose.Schema({
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Users",
+    ref: "User",
     required: true,
-  },
-  isDefault: {
-    type: Boolean,
-    default: false,
   },
   isActive: {
     type: Boolean,
     default: true,
   },
+  isDefault: {
+    type: Boolean,
+    default: false,
+  },
 });
-exports.default = mongoose.model("ShippingMethod", shippingMethodSchema);
+
+const ShippingMethod = mongoose.model("ShippingMethod", ShippingMethodSchema);
+
+module.exports = ShippingMethod;

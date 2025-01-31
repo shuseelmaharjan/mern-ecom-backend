@@ -2,6 +2,7 @@ const Order = require("../models/orders");
 const Product = require("../models/product");
 const { Shop } = require("../models/shop");
 const User = require("../models/users");
+const ShippingMethod = require("../models/shippingMethod");
 
 class OrderService {
   static async createOrder(orderData, userId) {
@@ -15,6 +16,8 @@ class OrderService {
       productCost,
       discount,
       shippingCost,
+      productColor,
+      productSize,
     } = orderData;
 
     try {
@@ -57,6 +60,8 @@ class OrderService {
         receiverPostalCode: shippingAddr.postalCode,
         receiverCountry: shippingAddr.country,
         orderStatus: "PENDING",
+        productColor,
+        productSize,
       });
 
       await order.save();
@@ -76,7 +81,7 @@ class OrderService {
       const query = { orderTo: shopId };
 
       if (
-        ["PENDING", "SHIPPED", "DELIVERED", "CANCELLED"].includes(orderStatus)
+        ["PENDING", "SHIPPED", "DELIVERED", "RETURNED"].includes(orderStatus)
       ) {
         query.orderStatus = orderStatus;
       }
@@ -107,10 +112,10 @@ class OrderService {
       }
 
       const orders = await Order.find(query)
-        .populate("orderItem", "_id title") // only populate specific fields
-        .populate("orderBy", "_id name email") // only populate specific fields
+        .populate("orderItem", "_id title")
+        .populate("orderBy", "_id name email")
         .select(
-          "_id orderStatus orderItem paymentStatus orderBy orderTo sku quantity customOrder productCost discount shippingCost shippingDate receiverName receiverPhone receiverEmail receiverAddress receiverAddress2 receiverCity receiverState receiverPostalCode receiverCountry orderDate createdAt orderId __v"
+          "_id orderStatus orderItem paymentStatus orderBy orderTo sku productSize productColor quantity customOrder productCost discount shippingCost shippingDate receiverName receiverPhone receiverEmail receiverAddress receiverAddress2 receiverCity receiverState receiverPostalCode receiverCountry orderDate createdAt orderId deliveredAt __v"
         );
 
       return orders.map((order) => {
@@ -125,6 +130,8 @@ class OrderService {
           orderBy: order.orderBy,
           orderTo: order.orderTo,
           sku: order.sku,
+          productSize: order.productSize,
+          productColor: order.productColor,
           quantity: order.quantity,
           customOrder: order.customOrder,
           productCost: order.productCost,
@@ -143,12 +150,165 @@ class OrderService {
           orderDate: order.orderDate,
           createdAt: order.createdAt,
           orderId: order.orderId,
+          deliveredAt: order.deliveredAt,
           __v: order.__v,
         };
       });
     } catch (error) {
       throw new Error(error.message);
     }
+  }
+
+  static async getOrderDetails(orderId) {
+    // Find the order by its _id
+    const order = await Order.findById(orderId)
+      .populate("orderItem")
+      .populate("orderTo")
+      .exec();
+
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    const product = await Product.findById(order.orderItem);
+
+    if (!product) {
+      throw new Error("Product not found");
+    }
+
+    const shop = await Shop.findById(order.orderTo);
+
+    if (!shop) {
+      throw new Error("Shop not found");
+    }
+
+    let shippingMethodDetails = null;
+    if (order.shippingMethod) {
+      const shippingMethod = await ShippingMethod.findById(
+        order.shippingMethod
+      );
+      if (!shippingMethod) {
+        throw new Error("Shipping method not found");
+      }
+      shippingMethodDetails = {
+        name: shippingMethod.name,
+        shippingCompany: shippingMethod.shippingCompany,
+      };
+    }
+
+    let price;
+    let image;
+    if (product.haveVariations) {
+      const variation = product.variations.find(
+        (variation) => variation.sku === order.sku
+      );
+      if (variation) {
+        price = variation.hasUniquePrice ? variation.price : product.price;
+        image = variation.media.images[0];
+      }
+    } else {
+      price = product.price;
+      image =
+        product.variations.length > 0
+          ? product.variations[0].media.images[0]
+          : null;
+    }
+
+    const productData = {
+      title: product.title,
+      category: product.category,
+      description: product.description,
+      price: price,
+      weight: product.haveVariations
+        ? product.variations.find((variation) => variation.sku === order.sku)
+            ?.weight
+        : product.weight,
+      color: product.haveVariations
+        ? product.variations.find((variation) => variation.sku === order.sku)
+            ?.color
+        : product.color,
+      stock: product.haveVariations
+        ? product.variations.find((variation) => variation.sku === order.sku)
+            ?.stock
+        : product.quantity,
+      image: image,
+    };
+
+    const orderData = {
+      _id: order._id,
+      orderId: order.orderId,
+      orderDate: order.orderDate,
+      orderStatus: order.orderStatus,
+      paymentStatus: order.paymentStatus,
+      sku: order.sku,
+      quantity: order.quantity,
+      customOrder: order.customOrder,
+      orderNote: order.orderNote,
+      trackingNumber: order.trackingNumber,
+      productCost: order.productCost,
+      productSize: order.productSize,
+      productColor: order.productColor,
+      discount: order.discount,
+      shippingCost: order.shippingCost,
+      shippingDate: order.shippingDate,
+      receiverName: order.receiverName,
+      receiverPhone: order.receiverPhone,
+      receiverEmail: order.receiverEmail,
+      receiverAddress: order.receiverAddress,
+      receiverAddress2: order.receiverAddress2,
+      receiverCity: order.receiverCity,
+      receiverState: order.receiverState,
+      receiverPostalCode: order.receiverPostalCode,
+      receiverCountry: order.receiverCountry,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+      deliveredAt: order.deliveredAt,
+      cancelledAt: order.cancelledAt,
+      isCancelled: order.isCancelled,
+      cancelledBy: order.cancelledBy,
+      cancelledReason: order.cancelledReason,
+      shopDescription: shop.description,
+      logisticCost: order.logisticCost,
+      shippingMethod: shippingMethodDetails,
+    };
+
+    return { order: orderData, product: productData };
+  }
+
+  static async placeOrder(
+    orderId,
+    shippingMethod,
+    trackingNumber,
+    logisticCost
+  ) {
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    order.shippingMethod = shippingMethod;
+    order.trackingNumber = trackingNumber;
+    order.logisticCost = logisticCost;
+    order.orderStatus = "SHIPPED";
+    order.shippingDate = new Date();
+
+    await order.save();
+
+    return order;
+  }
+
+  static async deliveredOrder(orderId) {
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    order.orderStatus = "DELIVERED";
+    order.deliveredAt = new Date();
+    await order.save();
+    return order;
   }
 }
 
