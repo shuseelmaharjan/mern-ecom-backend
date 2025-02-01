@@ -239,6 +239,18 @@ class AlgorithmController {
       return res.status(400).json({ success: false, message: error.message });
     }
   }
+
+  async getProductInformation(req, res) {
+    try {
+      const { productId } = req.params;
+      const productDetails = await algorithmService.getProductInformation(
+        productId
+      );
+      res.status(200).json(productDetails);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
 }
 
 module.exports = new AlgorithmController();

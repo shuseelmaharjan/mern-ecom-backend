@@ -2,6 +2,7 @@ const { Campaign } = require("../models/campaign");
 const Engagement = require("../models/engagement");
 const Product = require("../models/product");
 const { Category } = require("../models/categories");
+const { Shop } = require("../models/shop");
 
 class AlgorithmService {
   async getFlashSaleProducts() {
@@ -249,13 +250,12 @@ class AlgorithmService {
     }
   }
 
-  //for you page service 2
   async getFypService({ limit = 20, skip = 0 }) {
-    const products = await Product.find({ active: true })
+    const products = await Product.find({ isActive: true })
       .sort({ createdAt: -1, views: -1 })
       .skip(skip)
       .limit(limit)
-      .select("title media price brand views");
+      .select("title media price brand views variations");
 
     const recommendedProducts = [];
     for (const product of products) {
@@ -274,12 +274,27 @@ class AlgorithmService {
         };
       }
 
+      // Collect default images from variations
+      let variationImages = [];
+      const defaultVariations = product.variations.filter(
+        (variation) => variation.isDefault
+      );
+      defaultVariations.forEach((variation) => {
+        if (variation.media && variation.media.images) {
+          variationImages.push(...variation.media.images);
+        }
+      });
+
+      // Collect primary product images
+      let productImages = product.media?.images || [];
+
+      // Combine and deduplicate images
+      const allImages = [...new Set([...productImages, ...variationImages])];
+
       recommendedProducts.push({
         productId: product._id,
         title: product.title,
-        media: product.media?.images
-          ?.filter((img) => img.default || true)
-          .slice(0, 2),
+        media: allImages.slice(0, 2),
         price: product.price,
         brand: product.brand || null,
         views: product.views,
@@ -1027,6 +1042,85 @@ class AlgorithmService {
       .limit(Number(limit));
 
     return products;
+  }
+
+  async getProductInformation(productId) {
+    const product = await Product.findById(productId)
+      .populate("category")
+      .populate("createdBy")
+      .populate("shipping")
+      .populate("returnPolicy");
+
+    if (!product || !product.isActive) {
+      throw new Error("Product not found or is not active");
+    }
+
+    const shop = await Shop.findOne({
+      userId: product.createdBy._id,
+      isActive: true,
+    });
+
+    if (!shop) {
+      throw new Error("Shop not found or is not active");
+    }
+
+    // Check for engagement in campaigns
+    const engagement = await Engagement.findOne({
+      productId: product._id,
+      expiryTime: { $gt: new Date() },
+    }).populate("campaignId");
+
+    const result = {
+      product: {
+        title: product.title,
+        description: product.description,
+        price: product.price,
+        quantity: product.quantity,
+        productLimit: product.productLimit,
+        brand: product.brand,
+        weight: product.weight,
+        shape: product.shape,
+        hasDimension: product.hasDimension,
+        productHeight: product.productHeight,
+        productWidth: product.productWidth,
+        hasColor: product.hasColor,
+        color: product.color,
+        material: product.material,
+        hasSize: product.hasSize,
+        size: product.size,
+        customOrder: product.customOrder,
+        defaultShipping: product.defaultShipping,
+        shipping: product.shipping,
+        defaultReturnPolicy: product.defaultReturnPolicy,
+        returnPolicy: product.returnPolicy,
+        haveVariations: product.haveVariations,
+        variations: product.variations,
+        sales: product.sales,
+        rating: product.rating,
+        reviews: product.reviews,
+      },
+      shop: {
+        shopName: shop.shopName,
+        shopLogo: shop.shopLogo,
+        shopDescription: shop.shopDescription,
+      },
+    };
+
+    if (engagement && engagement.campaignId.isActive) {
+      result.campaign = {
+        saleType: engagement.campaignId.saleType,
+        title: engagement.campaignId.title,
+        description: engagement.campaignId.description,
+        startTime: engagement.campaignId.startTime,
+        expiryTime: engagement.campaignId.expiryTime,
+        image: engagement.campaignId.image,
+        banner: engagement.campaignId.banner,
+        poster: engagement.campaignId.poster,
+        discountPercentage: engagement.campaignId.discountPercentage,
+      };
+    }
+
+    return result;
   }
 }
 

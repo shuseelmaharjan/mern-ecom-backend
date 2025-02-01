@@ -53,4 +53,9 @@ router.get("/v1/festival-products", algorithmController.getFestivalProducts);
 // GET http://localhost:5000/api/v1/campaign-suggestion?campaignId=<campaignId>&limit=5&offset=0&minPrice=100&maxPrice=500&sortBy=most_popular
 router.get("/v1/campaign-suggestion", algorithmController.suggestProducts);
 
+router.get(
+  "/v1/individual-information/:productId",
+  algorithmController.getProductInformation
+);
+
 module.exports = router;
