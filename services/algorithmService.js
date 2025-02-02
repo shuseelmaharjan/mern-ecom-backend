@@ -2,7 +2,13 @@ const { Campaign } = require("../models/campaign");
 const Engagement = require("../models/engagement");
 const Product = require("../models/product");
 const { Category } = require("../models/categories");
-const { Shop } = require("../models/shop");
+const {
+  Shop,
+  CompanyShippingPolicy,
+  ShopShippingPolicy,
+  CompanyReturnPolicy,
+  ShopReturnPolicy,
+} = require("../models/shop");
 
 class AlgorithmService {
   async getFlashSaleProducts() {
@@ -1064,14 +1070,40 @@ class AlgorithmService {
       throw new Error("Shop not found or is not active");
     }
 
-    // Check for engagement in campaigns
     const engagement = await Engagement.findOne({
       productId: product._id,
-      expiryTime: { $gt: new Date() },
-    }).populate("campaignId");
+    }).populate({
+      path: "campaignId",
+      match: { isActive: true },
+    });
+
+    let shippingPolicy;
+    if (product.defaultShipping) {
+      shippingPolicy = await CompanyShippingPolicy.findOne({
+        isActive: true,
+      });
+    } else {
+      shippingPolicy = await ShopShippingPolicy.findOne({
+        shopId: shop._id,
+        isActive: true,
+      });
+    }
+
+    let returnPolicy;
+    if (product.defaultReturnPolicy) {
+      returnPolicy = await CompanyReturnPolicy.findOne({
+        isActive: true,
+      });
+    } else {
+      returnPolicy = await ShopReturnPolicy.findOne({
+        shopId: shop._id,
+        isActive: true,
+      });
+    }
 
     const result = {
       product: {
+        _id: product._id,
         title: product.title,
         description: product.description,
         price: product.price,
@@ -1090,23 +1122,26 @@ class AlgorithmService {
         size: product.size,
         customOrder: product.customOrder,
         defaultShipping: product.defaultShipping,
-        shipping: product.shipping,
+        shipping: shippingPolicy,
         defaultReturnPolicy: product.defaultReturnPolicy,
-        returnPolicy: product.returnPolicy,
+        returnPolicy: returnPolicy,
         haveVariations: product.haveVariations,
         variations: product.variations,
         sales: product.sales,
-        rating: product.rating,
-        reviews: product.reviews,
       },
       shop: {
         shopName: shop.shopName,
         shopLogo: shop.shopLogo,
         shopDescription: shop.shopDescription,
       },
+      review: {
+        rating: product.rating,
+        reviews: product.reviews,
+      },
+      isEngaged: !!engagement,
     };
 
-    if (engagement && engagement.campaignId.isActive) {
+    if (engagement && engagement.campaignId && engagement.campaignId.isActive) {
       result.campaign = {
         saleType: engagement.campaignId.saleType,
         title: engagement.campaignId.title,
