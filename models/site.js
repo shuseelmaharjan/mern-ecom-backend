@@ -40,6 +40,7 @@ const logSchema = new mongoose.Schema(
 const chargeSchema = new mongoose.Schema({
   title: { type: String, required: true },
   percentage: { type: Number, required: true },
+  tax: { type: Number, required: true },
   isActive: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now },
 });

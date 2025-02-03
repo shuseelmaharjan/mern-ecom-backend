@@ -1,6 +1,18 @@
 const mongoose = require("mongoose");
 const crypto = require("crypto");
 
+const myCartSchema = mongoose.Schema({
+  productId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Product",
+    required: true,
+  },
+  quantity: { type: Number, required: true },
+  color: { type: String, required: true },
+  size: { type: String, required: true },
+  sku: { type: String, required: true },
+});
+
 const shippingAddressSchema = mongoose.Schema({
   fullName: { type: String, required: true },
   addressLine1: { type: String, required: true },
@@ -9,7 +21,7 @@ const shippingAddressSchema = mongoose.Schema({
   state: { type: String, required: true },
   postalCode: { type: String, required: true },
   country: { type: String, required: true },
-  phone: { type: String, require: true },
+  phone: { type: String, required: true },
   isDefault: { type: Boolean, default: false },
   defaultBilling: { type: Boolean, default: false },
   isHome: { type: Boolean, default: false },
@@ -25,7 +37,7 @@ const employeeSchema = mongoose.Schema({
   salary: { type: Number, required: true },
 });
 
-const emergencyContact = mongoose.Schema({
+const emergencyContactSchema = mongoose.Schema({
   name: { type: String, required: true },
   relationship: { type: String, required: true },
   phoneNumber: { type: String, required: true },
@@ -48,13 +60,14 @@ const userSchema = mongoose.Schema({
   verified: { type: Boolean, default: false },
   shippingAddresses: [shippingAddressSchema],
   employee: employeeSchema,
-  emergencyContact: emergencyContact,
+  emergencyContact: emergencyContactSchema,
   gender: {
     type: String,
     enum: ["Male", "Female", "Other"],
     required: false,
     default: null,
   },
+  myCart: [myCartSchema],
 });
 
 const generateEmployeeId = () => {

@@ -46,6 +46,7 @@ const algorithmRoutes = require("./routes/algorithmRoutes");
 const companyPolicyRoutes = require("./routes/companyPolicyRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const shippingMethodRoutes = require("./routes/shippingMethodRoutes");
+const cartRoutes = require("./routes/cartRoutes");
 
 app.use("/api", authRoute);
 app.use("/api", shippingRoute);
@@ -64,12 +65,13 @@ app.use("/api", algorithmRoutes);
 app.use("/api", companyPolicyRoutes);
 app.use("/api", orderRoutes);
 app.use("/api", shippingMethodRoutes);
+app.use("/api", cartRoutes);
 // Socket.IO Setup
 const server = http.createServer(app);
 
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: process.env.CORS_ORIGIN,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   },
 });

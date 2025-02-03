@@ -205,11 +205,12 @@ class SiteService {
 
   async createCharge(body) {
     try {
-      const { title, percentage } = body;
+      const { title, percentage, tax } = body;
 
       const newCharge = new Charge({
         title,
         percentage,
+        tax,
         isActive: true,
       });
 

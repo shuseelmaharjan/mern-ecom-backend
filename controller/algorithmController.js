@@ -251,6 +251,24 @@ class AlgorithmController {
       res.status(400).json({ message: error.message });
     }
   }
+
+  async getCartTotalItemsDetails(req, res) {
+    const { products } = req.body;
+
+    if (!products || !Array.isArray(products) || products.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "Missing or invalid products parameter" });
+    }
+
+    try {
+      const results = await algorithmService.calculateTotalPrice(products);
+      return res.json(results);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: error.message });
+    }
+  }
 }
 
 module.exports = new AlgorithmController();
