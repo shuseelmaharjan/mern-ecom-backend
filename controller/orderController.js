@@ -7,6 +7,7 @@ class OrderController {
       const getUserId = new GetUserId(req);
       const userId = await getUserId.getUserId();
 
+      console.log(req.body);
       const order = await OrderService.createOrder(req.body, userId);
 
       return res.status(201).json({

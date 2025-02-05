@@ -104,18 +104,45 @@ class CartController {
   }
 
   async updateCartItems(req, res) {
-    const id = new GetUserId(req); // This function seems to extract userId
-    const userId = await id.getUserId(); // Get userId
-    const { cartId, action } = req.params; // Extract cartId and action from params
+    const id = new GetUserId(req);
+    const userId = await id.getUserId();
+    const { cartId, action } = req.params;
     try {
       const user = await Users.findById(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
 
-      const cartItems = user.myCart; // Get cart items from the user
-      await cartService.updateCartItems(userId, cartItems, action, cartId); // Call the service function
+      const cartItems = user.myCart;
+      await cartService.updateCartItems(userId, cartItems, action, cartId);
       return res.json({ message: "Cart updated successfully" });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: error.message });
+    }
+  }
+
+  async myCheckout(req, res) {
+    const id = new GetUserId(req);
+    const userId = await id.getUserId();
+    console.log(req.headers);
+
+    try {
+      const selectedCartItemIds = req.query.selectedCartItemIds
+        ? req.query.selectedCartItemIds.split(",")
+        : [];
+
+      const { shippingPolicyId } = req.params;
+
+      console.log("Received selectedCartItemIds:", selectedCartItemIds);
+      console.log("Received shippingPolicyId:", shippingPolicyId);
+
+      const cartData = await cartService.myCheckout(
+        userId,
+        selectedCartItemIds,
+        shippingPolicyId
+      );
+      return res.status(200).json(cartData);
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: error.message });

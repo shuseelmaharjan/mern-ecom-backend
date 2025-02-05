@@ -56,6 +56,7 @@ const orderSchema = mongoose.Schema({
   },
   trackingNumber: { type: String, required: false },
   productCost: { type: Number, required: true },
+  tax: { type: Number, required: false },
   productSize: { type: String, required: false },
   productColor: { type: String, required: false },
   discount: { type: Number, required: false },

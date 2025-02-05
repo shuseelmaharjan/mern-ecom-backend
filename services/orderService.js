@@ -9,10 +9,9 @@ class OrderService {
     const {
       orderItem,
       quantity,
-      customOrder,
-      orderNote,
       shippingAddress,
       sku,
+      tax,
       productCost,
       discount,
       shippingCost,
@@ -40,9 +39,8 @@ class OrderService {
         orderBy: userId,
         orderTo: shopId,
         sku,
+        tax,
         quantity,
-        customOrder,
-        orderNote,
         shippingAddress: {
           user: userId,
           addressIndex: user.shippingAddresses.indexOf(shippingAddr),

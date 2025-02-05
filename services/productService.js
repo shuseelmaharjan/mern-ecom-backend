@@ -264,6 +264,8 @@ class ProductService {
       hasDimension,
       productHeight,
       productWidth,
+      freeShipping,
+      minQuantity,
     } = product;
 
     try {
@@ -285,6 +287,8 @@ class ProductService {
           productWidth,
           isDraft: false,
           isActive: true,
+          freeShipping,
+          minQuantity,
         },
         { new: true }
       );

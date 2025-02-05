@@ -43,6 +43,8 @@ const ProductSchema = new mongoose.Schema({
     ref: "ShopReturnPolicy",
     required: false,
   },
+  freeShipping: { type: Boolean, default: false },
+  minQuantity: { type: Number, required: false },
   isActive: { type: Boolean, default: false },
   isDraft: { type: Boolean, default: true },
   haveVariations: { type: Boolean, default: false },

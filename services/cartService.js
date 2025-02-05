@@ -3,6 +3,7 @@ const Product = require("../models/product");
 const { Campaign } = require("../models/campaign");
 const Users = require("../models/users");
 const { Charge } = require("../models/site");
+const { CompanyShippingPolicy } = require("../models/shop");
 
 class CartService {
   async getCartProductDetails(productId, sku) {
@@ -13,7 +14,7 @@ class CartService {
       throw new Error("Product not found");
     }
 
-    console.log("Product found:", product); // Log product for debugging
+    console.log("Product found:", product);
 
     if (!product.variations || product.variations.length === 0) {
       throw new Error("No variations found for this product");
@@ -303,6 +304,125 @@ class CartService {
       return 0;
     }
     return user.myCart.length;
+  }
+
+  async myCheckout(userId, selectedCartItemIds, shippingPolicyId) {
+    const user = await Users.findById(userId);
+    if (!user) throw new Error("User not found");
+
+    const activeTax = await Charge.findOne({ isActive: true });
+    const taxPercentage = activeTax ? activeTax.tax : 0;
+
+    const selectedIds =
+      selectedCartItemIds?.length > 0
+        ? selectedCartItemIds.map((id) => id.toString())
+        : user.myCart.map((item) => item._id.toString());
+
+    const shippingPolicy = await CompanyShippingPolicy.findById(
+      shippingPolicyId
+    );
+    if (!shippingPolicy) throw new Error("Shipping policy not found");
+
+    let sumOfAllProducts = 0;
+    let sumOfDiscountedAmounts = 0;
+    let sumOfTotalPricesAfterDiscount = 0;
+    let shippingCharge = 0;
+
+    const cartItems = await Promise.all(
+      user.myCart.map(async (cartItem) => {
+        if (!selectedIds.includes(cartItem._id.toString())) return null;
+
+        const product = await Product.findById(cartItem.productId);
+        if (!product)
+          throw new Error(`Product with ID ${cartItem.productId} not found`);
+
+        const variation = product.variations.find(
+          (v) => v.sku === cartItem.sku
+        );
+        if (!variation)
+          throw new Error(`Variation with SKU ${cartItem.sku} not found`);
+
+        const engagement = await Engagement.findOne({
+          userId,
+          productId: cartItem.productId,
+        });
+
+        let campaign = null;
+        let offeredPrice = null;
+        let price = variation.hasUniquePrice ? variation.price : product.price;
+
+        if (engagement) {
+          campaign = await Campaign.findById(engagement.campaignId);
+          if (campaign?.isActive) {
+            offeredPrice = price - (campaign.discountPercentage / 100) * price;
+          }
+        }
+
+        const finalPrice = offeredPrice || price;
+
+        sumOfAllProducts += price * cartItem.quantity;
+        sumOfTotalPricesAfterDiscount += finalPrice * cartItem.quantity;
+        if (offeredPrice) {
+          sumOfDiscountedAmounts += (price - offeredPrice) * cartItem.quantity;
+        }
+
+        // Calculate shipping cost
+        let productShippingCharge = shippingPolicy.costofDelivery;
+        if (
+          (product.freeShipping && cartItem.quantity >= product.minQuantity) ||
+          (campaign && campaign.saleType === "FREESHIPPING")
+        ) {
+          productShippingCharge = 0;
+        }
+        shippingCharge += productShippingCharge;
+
+        return {
+          _id: cartItem._id,
+          productId: cartItem.productId,
+          quantity: cartItem.quantity,
+          color: cartItem.color,
+          size: cartItem.size,
+          sku: cartItem.sku,
+          title: product.title,
+          price,
+          image: variation.media.images[0],
+          campaign: campaign
+            ? {
+                title: campaign.title,
+                expiryTime: campaign.expiryTime,
+                image: campaign.image,
+                poster: campaign.poster,
+                discountPercentage: campaign.discountPercentage,
+                saleType: campaign.saleType,
+                offeredPrice,
+              }
+            : null,
+        };
+      })
+    );
+
+    // Remove null entries from the array
+    const filteredCartItems = cartItems.filter((item) => item !== null);
+
+    const taxAmount = parseFloat(
+      (sumOfTotalPricesAfterDiscount * (taxPercentage / 100)).toFixed(2)
+    );
+    const totalWithTax = parseFloat(
+      (sumOfTotalPricesAfterDiscount + taxAmount).toFixed(2)
+    );
+    const totalCostWithShipping = totalWithTax + shippingCharge;
+
+    return {
+      cartItems: filteredCartItems,
+      sum: parseFloat(sumOfAllProducts.toFixed(2)),
+      discountedAmount: parseFloat(sumOfDiscountedAmounts.toFixed(2)),
+      total: parseFloat(sumOfTotalPricesAfterDiscount.toFixed(2)),
+      taxPercentage,
+      tax: taxAmount,
+      totalWithTax,
+      shippingCharge: parseFloat(shippingCharge.toFixed(2)),
+      totalCostWithShipping: parseFloat(totalCostWithShipping.toFixed(2)),
+    };
   }
 }
 

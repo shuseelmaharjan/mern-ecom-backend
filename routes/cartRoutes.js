@@ -19,4 +19,6 @@ router.put(
   cartContoller.updateCartItems
 );
 
+router.get("/v1/checkout/:shippingPolicyId", cartContoller.myCheckout);
+
 module.exports = router;
